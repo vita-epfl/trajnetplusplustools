@@ -1,0 +1,6 @@
+data/
+.DS_Store
+
+# Python
+venv*/
+*.egg-info
