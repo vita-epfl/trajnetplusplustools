@@ -4,3 +4,4 @@ data/
 # Python
 venv*/
 *.egg-info
+__pycache__
