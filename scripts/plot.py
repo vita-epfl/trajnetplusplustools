@@ -19,6 +19,21 @@ def show(fig_file=None, **kwargs):
     plt.close(fig)
 
 
+@contextmanager
+def show2(fig_file=None, **kwargs):
+    fig = plt.figure(**kwargs)
+    ax1 = fig.add_subplot(1, 2, 1, polar=True)
+    ax2 = fig.add_subplot(1, 2, 2)
+
+    yield ax1, ax2
+
+    fig.set_tight_layout(True)
+    if fig_file:
+        fig.savefig(fig_file, dpi=300)
+    fig.show()
+    plt.close(fig)
+
+
 def theta_r(row1, row2, row3):
     diff1 = np.array([row2.x - row1.x, row2.y - row1.y])
     diff2 = np.array([row3.x - row2.x, row3.y - row2.y])
@@ -64,11 +79,11 @@ def dataset_plots(input_files, output, n_theta=64, vr_max=2.5, vr_n=10):
     median_vr[median_vr < 0.1] = np.nan
     print(median_vr)
 
-    with show(output + '_theta_speed.png', subplot_kw={'projection': 'polar'}) as ax:
+    with show2(output + '_theta_speed.png', figsize=(8, 4)) as (ax1, ax2):
         r_edges = np.linspace(0, vr_max, distr.shape[1] + 1)
         theta_edges = np.linspace(0, 2*np.pi, distr.shape[0] + 1)
         thetas, rs = np.meshgrid(theta_edges, r_edges)
-        ax.pcolormesh(thetas, rs, distr.T, cmap='Blues')
+        ax1.pcolormesh(thetas, rs, distr.T, cmap='Blues')
 
         center_thetas = np.linspace(0.0, 2*np.pi, len(median_vr) + 1)
         center_thetas = 0.5 * (center_thetas[:-1] + center_thetas[1:])
@@ -76,10 +91,15 @@ def dataset_plots(input_files, output, n_theta=64, vr_max=2.5, vr_n=10):
         center_thetas = np.hstack([center_thetas, center_thetas[0:1]])
         median_vr = np.hstack([median_vr, median_vr[0:1]])
         # plot median radial velocity
-        ax.plot(center_thetas, median_vr, label='median $v_r$ [m/s]', color='orange')
+        ax1.plot(center_thetas, median_vr, label='median $v_r$ [m/s]', color='orange')
 
-        ax.grid(linestyle='dotted')
-        ax.legend()
+        ax1.grid(linestyle='dotted')
+        ax1.legend()
+
+        # histogram of radial velocities
+        ax2.hist([vr for theta_bin in unbinned_vr for vr in theta_bin],
+                 bins=20, range=(0.0, vr_max))
+        ax2.set_xlabel('$v_r$ [m/s]')
 
 
 if __name__ == '__main__':
