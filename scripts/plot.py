@@ -108,4 +108,4 @@ if __name__ == '__main__':
     dataset_plots('data/train/crowds_students003/*.txt', 'output/crowds_students003')
     dataset_plots('data/train/crowds_zara02/*.txt', 'output/crowds_zara02')
     dataset_plots('data/train/crowds_zara03/*.txt', 'output/crowds_zara03')
-    dataset_plots('data/train/mot_pets2009_s2l1/*.txt', 'output/mot_pets2009_s2l1')  #, n_theta=8, vr_max=4.0, vr_n=5)
+    dataset_plots('data/train/mot_pets2009_s2l1/*.txt', 'output/mot_pets2009_s2l1')
