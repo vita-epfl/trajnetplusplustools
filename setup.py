@@ -29,7 +29,7 @@ setup(
             'pylint',
             'pytest',
         ],
-        'plots': [
+        'plot': [
             'matplotlib',
         ]
     },
