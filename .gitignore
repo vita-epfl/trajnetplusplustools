@@ -1,4 +1,5 @@
 data/
+output/
 .DS_Store
 
 # Python

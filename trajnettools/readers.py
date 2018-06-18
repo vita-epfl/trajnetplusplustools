@@ -2,7 +2,7 @@ import numpy as np
 import scipy.interpolate
 import xml.etree.ElementTree
 
-from .data import Row
+from .data import MarkedRow, Row
 
 
 def biwi(line):
@@ -14,8 +14,8 @@ def biwi(line):
 
 
 def crowds_interpolate_person(ped_id, person_xyf):
-    xs = np.array([x for x, _, _ in person_xyf])
-    ys = np.array([y for _, y, _ in person_xyf])
+    xs = np.array([x for x, _, _ in person_xyf]) / 720 * 12
+    ys = np.array([y for _, y, _ in person_xyf]) / 576 * 12
     fs = np.array([f for _, _, f in person_xyf])
 
     kind = 'linear'
@@ -63,7 +63,7 @@ def crowds(whole_file):
             for row in crowds_interpolate_person(i, p)]
 
 
-def mot(file_name):
+def mot_xml(file_name):
     """PETS2009 dataset.
 
     Original frame rate is 7 frames / sec.
@@ -72,6 +72,9 @@ def mot(file_name):
     root = tree.getroot()
     for frame in root:
         f = int(frame.attrib['number'])
+        if f % 2 != 0:  # reduce to 3.5 rows / sec
+            continue
+
         for ped in frame.find('objectlist'):
             p = ped.attrib['id']
             box = ped.find('box')
@@ -81,9 +84,34 @@ def mot(file_name):
             yield Row(f, int(p), float(x) / 100.0, float(y) / 100.0)
 
 
+def mot(line):
+    """Line reader for MOT files.
+
+    MOT format:
+    <frame>, <id>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, <conf>, <x>, <y>, <z>
+    """
+    line = [e for e in line.split(',') if e != '']
+    return Row(int(float(line[0])),
+               int(float(line[1])),
+               float(line[7]),
+               float(line[8]))
+
+
 def trajnet(line):
     line = [e for e in line.split(' ') if e != '']
     return Row(int(float(line[0])),
                int(float(line[1])),
                float(line[2]),
                float(line[3]))
+
+
+def trajnet_marked(whole_file):
+    for line in whole_file.split('\n'):
+        if not line:
+            continue
+        line = [e for e in line.split(' ') if e != '']
+        yield MarkedRow(int(float(line[0])),
+                        int(float(line[1])),
+                        float(line[2]),
+                        float(line[3]),
+                        bool(float(line[4])))

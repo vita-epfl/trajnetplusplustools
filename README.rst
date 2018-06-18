@@ -9,7 +9,7 @@ Existing data:
         data_university_students.rar
         data_zara.rar
         ewap_dataset_light.tgz
-        PETS2009-S2L1.xml  # from: http://www.milanton.de/files/gt/PETS2009/PETS2009-S2L1.xml (video file at http://cs.binghamton.edu/~mrldata/public/PETS2009/S2_L1.tar.bz2)
+        3DMOT2015Labels  # from: https://motchallenge.net/data/3DMOT2015Labels.zip (video file at http://cs.binghamton.edu/~mrldata/public/PETS2009/S2_L1.tar.bz2)
         Train.zip  # from trajnet.epfl.ch
 
 Extract:
@@ -28,7 +28,7 @@ Extract:
 
     # PETS09 S2L1 ground truth
     mkdir -p data/raw/mot
-    cp data/PETS2009-S2L1.xml data/raw/mot/
+    cp data/3DMOT2015Labels/train/PETS09-S2L1/gt/gt.txt data/raw/mot/pets2009_s2l1.txt
 
     # original Trajnet files
     mkdir -p data/trajnet_original
