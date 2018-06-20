@@ -64,8 +64,8 @@ def dataset_plots(input_files, output, n_theta=64, vr_max=2.5, vr_n=10):
         thetap = math.floor(theta * len(unbinned_vr) / (2*np.pi))
         unbinned_vr[thetap].append(vr)
     scenes.values().foreach(fill_unbinned_vr)
-    median_vr = np.array([np.median(vrs) for vrs in unbinned_vr])
-    median_vr[median_vr < 0.1] = np.nan
+    median_vr = np.array([np.median(vrs) if len(vrs) > 5 else np.nan
+                          for vrs in unbinned_vr])
     print(median_vr)
 
     with show2(output + '_theta_speed.png', figsize=(8, 4)) as (ax1, ax2):
@@ -92,9 +92,15 @@ def dataset_plots(input_files, output, n_theta=64, vr_max=2.5, vr_n=10):
 
 
 if __name__ == '__main__':
-    dataset_plots('data/train/biwi_hotel/*.txt', 'output/biwi_hotel')
-    dataset_plots('data/train/crowds_students001/*.txt', 'output/crowds_students001')
-    dataset_plots('data/train/crowds_students003/*.txt', 'output/crowds_students003')
-    dataset_plots('data/train/crowds_zara02/*.txt', 'output/crowds_zara02')
-    dataset_plots('data/train/crowds_zara03/*.txt', 'output/crowds_zara03')
-    dataset_plots('data/train/mot_pets2009_s2l1/*.txt', 'output/mot_pets2009_s2l1')
+    # train
+    dataset_plots('output/train/biwi_hotel/*.txt', 'output/biwi_hotel')
+    dataset_plots('output/train/crowds_students001/*.txt', 'output/crowds_students001')
+    dataset_plots('output/train/crowds_students003/*.txt', 'output/crowds_students003')
+    dataset_plots('output/train/crowds_zara02/*.txt', 'output/crowds_zara02')
+    dataset_plots('output/train/crowds_zara03/*.txt', 'output/crowds_zara03')
+    dataset_plots('output/train/mot_pets2009_s2l1/*.txt', 'output/mot_pets2009_s2l1')
+
+    # test
+    dataset_plots('output/test/biwi_eth/*.txt', 'output/biwi_eth')
+    dataset_plots('output/test/crowds_uni_examples/*.txt', 'output/crowds_uni_examples')
+    dataset_plots('output/test/crowds_zara01/*.txt', 'output/crowds_zara01')
