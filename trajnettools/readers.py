@@ -27,8 +27,6 @@ def crowds_interpolate_person(ped_id, person_xyf):
     y_fn = scipy.interpolate.interp1d(fs, ys, kind=kind)
 
     frames = np.arange(min(fs) // 10 * 10 + 10, max(fs), 10)
-    print(frames)
-
     return [Row(int(f), ped_id, x, y)
             for x, y, f in np.stack([x_fn(frames), y_fn(frames), frames]).T]
 

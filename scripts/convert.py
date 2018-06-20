@@ -6,6 +6,7 @@ import trajnettools
 
 
 def biwi(sc, input_file, output_file):
+    print('processing ' + input_file)
     biwi_input = (sc
                   .textFile(input_file)
                   .map(trajnettools.readers.biwi)
@@ -18,6 +19,7 @@ def biwi(sc, input_file, output_file):
 
 
 def crowds(sc, input_file, output_file):
+    print('processing ' + input_file)
     crowds_input = (sc
                     .wholeTextFiles(input_file)
                     .values()
@@ -32,6 +34,7 @@ def crowds(sc, input_file, output_file):
 
 def mot(sc, input_file, output_file):
     """Supposedly was 7 frames per second in original recording."""
+    print('processing ' + input_file)
     mot_input = (sc
                  .textFile(input_file)
                  .map(trajnettools.readers.mot)
@@ -46,13 +49,21 @@ def mot(sc, input_file, output_file):
 
 def main():
     sc = pysparkling.Context()
-    # biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt', 'data/train/biwi_hotel/{}.txt')
-    # crowds(sc, 'data/raw/crowds/arxiepiskopi1.vsp', 'data/train/crowds_arxiepiskopi1/{}.txt')
-    # crowds(sc, 'data/raw/crowds/crowds_zara02.vsp', 'data/train/crowds_zara02/{}.txt')
-    # crowds(sc, 'data/raw/crowds/crowds_zara03.vsp', 'data/train/crowds_zara03/{}.txt')
-    # crowds(sc, 'data/raw/crowds/students001.vsp', 'data/train/crowds_students001/{}.txt')
-    # crowds(sc, 'data/raw/crowds/students003.vsp', 'data/train/crowds_students003/{}.txt')
-    mot(sc, 'data/raw/mot/pets2009_s2l1.txt', 'data/train/mot_pets2009_s2l1/{}.txt')
+
+    # train
+    biwi(sc, 'data/raw/biwi/seq_hotel/obsmat.txt', 'output/train/biwi_hotel/{}.txt')
+    crowds(sc, 'data/raw/crowds/arxiepiskopi1.vsp', 'output/train/crowds_arxiepiskopi1/{}.txt')
+    crowds(sc, 'data/raw/crowds/crowds_zara02.vsp', 'output/train/crowds_zara02/{}.txt')
+    crowds(sc, 'data/raw/crowds/crowds_zara03.vsp', 'output/train/crowds_zara03/{}.txt')
+    crowds(sc, 'data/raw/crowds/students001.vsp', 'output/train/crowds_students001/{}.txt')
+    crowds(sc, 'data/raw/crowds/students003.vsp', 'output/train/crowds_students003/{}.txt')
+    mot(sc, 'data/raw/mot/pets2009_s2l1.txt', 'output/train/mot_pets2009_s2l1/{}.txt')
+
+    # test
+    biwi(sc, 'data/raw/biwi/seq_eth/obsmat.txt', 'output/test/biwi_eth/{}.txt')
+    crowds(sc, 'data/raw/crowds/crowds_zara01.vsp', 'output/test/crowds_zara01/{}.txt')
+    crowds(sc, 'data/raw/crowds/uni_examples.vsp', 'output/test/crowds_uni_examples/{}.txt')
+
 
 if __name__ == '__main__':
     main()
