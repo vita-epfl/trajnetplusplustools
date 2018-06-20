@@ -3,7 +3,7 @@ import numpy as np
 import scipy.interpolate
 import xml.etree.ElementTree
 
-from .data import MarkedRow, Row
+from .data import Row
 
 
 def biwi(line):
@@ -96,7 +96,7 @@ def mot(line):
                float(line[8]))
 
 
-def trajnet(line):
+def trajnet_original(line):
     line = [e for e in line.split(' ') if e != '']
     return Row(int(float(line[0])),
                int(float(line[1])),
@@ -104,7 +104,7 @@ def trajnet(line):
                float(line[3]))
 
 
-def trajnet_marked(whole_file):
+def trajnet(whole_file):
     marked = defaultdict(list)
     others = defaultdict(list)
     for line in whole_file.split('\n'):

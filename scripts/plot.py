@@ -38,7 +38,7 @@ def dataset_plots(input_files, output, n_theta=64, vr_max=2.5, vr_n=10):
     sc = pysparkling.Context()
     scenes = (sc
               .wholeTextFiles(input_files)
-              .mapValues(trajnettools.readers.trajnet_marked)
+              .mapValues(trajnettools.readers.trajnet)
               .mapValues(lambda paths: paths[0])
               .mapValues(theta_vr)
               .cache())

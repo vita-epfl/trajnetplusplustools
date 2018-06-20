@@ -22,7 +22,7 @@ def predict(input_files):
     sc = pysparkling.Context()
     paths = (sc
              .wholeTextFiles(input_files)
-             .mapValues(trajnettools.readers.trajnet_marked)
+             .mapValues(trajnettools.readers.trajnet)
              .cache())
     kalman_predictions = (paths
                           .mapValues(lambda paths: paths[0])
