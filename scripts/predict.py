@@ -72,4 +72,5 @@ def predict(input_files):
 
 
 if __name__ == '__main__':
+    # predict('output/test/biwi_eth/?.txt')
     predict('output/train/biwi_hotel/?.txt')
