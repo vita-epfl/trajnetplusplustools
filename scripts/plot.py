@@ -7,19 +7,6 @@ import trajnettools
 
 
 @contextmanager
-def show(fig_file=None, **kwargs):
-    fig, ax = plt.subplots(**kwargs)
-
-    yield ax
-
-    fig.set_tight_layout(True)
-    if fig_file:
-        fig.savefig(fig_file, dpi=300)
-    fig.show()
-    plt.close(fig)
-
-
-@contextmanager
 def show2(fig_file=None, **kwargs):
     fig = plt.figure(**kwargs)
     ax1 = fig.add_subplot(1, 2, 1, polar=True)
@@ -34,16 +21,17 @@ def show2(fig_file=None, **kwargs):
     plt.close(fig)
 
 
-def theta_r(row1, row2, row3):
+def theta_vr(path):
+    row1, row2, row3, row4 = path[5], path[8], path[17], path[20]
     diff1 = np.array([row2.x - row1.x, row2.y - row1.y])
-    diff2 = np.array([row3.x - row2.x, row3.y - row2.y])
+    diff2 = np.array([row4.x - row3.x, row4.y - row3.y])
     theta1 = np.arctan2(diff1[1], diff1[0])
     theta2 = np.arctan2(diff2[1], diff2[0])
-    r1 = np.linalg.norm(diff1)
-    r2 = np.linalg.norm(diff2)
-    if r1 < 0.1:
+    vr1 = np.linalg.norm(diff1) / (3 * 0.4)
+    vr2 = np.linalg.norm(diff2) / (3 * 0.4)
+    if vr1 < 0.1:
         return 0, 0
-    return theta2 - theta1, r2
+    return theta2 - theta1, vr2
 
 
 def dataset_plots(input_files, output, n_theta=64, vr_max=2.5, vr_n=10):
@@ -51,28 +39,29 @@ def dataset_plots(input_files, output, n_theta=64, vr_max=2.5, vr_n=10):
     scenes = (sc
               .wholeTextFiles(input_files)
               .mapValues(trajnettools.readers.trajnet_marked)
-              .mapValues(lambda path: [r for r in path if r.mark])
-              .mapValues(lambda path: theta_r(path[7], path[10], path[19]))
+              .mapValues(lambda paths: paths[0])
+              .mapValues(theta_vr)
               .cache())
 
     distr = np.zeros((n_theta, vr_n))
-    def fill_grid(theta_r):
-        theta, r = theta_r
+    def fill_grid(theta_vr):
+        theta, vr = theta_vr
+        if vr < 0.01:
+            return
         thetap = math.floor(theta * distr.shape[0] / (2*np.pi))
-        vrp = math.floor(r * distr.shape[1] / 3.6 / vr_max)
+        vrp = math.floor(vr * distr.shape[1] / vr_max)
         if vrp >= distr.shape[1]:
             vrp = distr.shape[1] - 1
-        if vrp < 0.01:
-            return
         distr[thetap, vrp] += 1
 
     scenes.values().foreach(fill_grid)
 
     unbinned_vr = [[] for _ in range(n_theta)]
-    def fill_unbinned_vr(theta_r):
-        theta, r = theta_r
+    def fill_unbinned_vr(theta_vr):
+        theta, vr = theta_vr
+        if vr < 0.01:
+            return
         thetap = math.floor(theta * len(unbinned_vr) / (2*np.pi))
-        vr = r / 3.6
         unbinned_vr[thetap].append(vr)
     scenes.values().foreach(fill_unbinned_vr)
     median_vr = np.array([np.median(vrs) for vrs in unbinned_vr])
