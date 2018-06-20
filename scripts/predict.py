@@ -1,6 +1,7 @@
 
 from contextlib import contextmanager
 import matplotlib.pyplot as plt
+import os
 import pysparkling
 import trajnettools
 
@@ -13,6 +14,7 @@ def show(fig_file=None, **kwargs):
 
     fig.set_tight_layout(True)
     if fig_file:
+        os.makedirs(os.path.dirname(fig_file), exist_ok=True)
         fig.savefig(fig_file, dpi=300)
     fig.show()
     plt.close(fig)
@@ -29,8 +31,12 @@ def predict(input_files):
                           .mapValues(trajnettools.kalman.predict))
 
     paths = paths.leftOuterJoin(kalman_predictions)
-    for i, (scene, (gt, kf)) in enumerate(paths.collect()):
-        with show('output/biwi_hotel_scene{}.png'.format(i)) as ax:
+    for scene, (gt, kf) in paths.toLocalIterator():
+        output_file = (scene
+                       .replace('/train/', '/train_plots/')
+                       .replace('/test/', '/test_plots/')
+                       .replace('.txt', '.png'))
+        with show(output_file) as ax:
             # KF prediction
             ax.plot([gt[0][8].x] + [r.x for r in kf],
                     [gt[0][8].y] + [r.y for r in kf], color='orange', label='KF')
@@ -66,4 +72,4 @@ def predict(input_files):
 
 
 if __name__ == '__main__':
-    predict('data/train/biwi_hotel/?.txt')
+    predict('output/train/biwi_hotel/?.txt')
