@@ -2,6 +2,7 @@ import random
 import torch
 import torch.nn.functional as F
 
+from . import augmentation
 from .data import Row
 
 
@@ -100,6 +101,8 @@ def train(paths, epochs=100):
         random.shuffle(paths)
         epoch_loss = 0.0
         for path in paths:
+            path = augmentation.random_rotation(path)
+
             observed = torch.Tensor([[(r.x, r.y)] for r in path[:9]])
             target = torch.Tensor([[(r.x, r.y)] for r in path[1:]])
             velocity_inputs = observed[1:] - observed[:-1]
