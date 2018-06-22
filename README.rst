@@ -44,3 +44,28 @@ Extract:
 * pedestrians that appear in multiple chunks had the same id before (might be a problem for some input readers)
 * separate scenes with annotation of the one primary pedestrian
 * the primary pedestrian has to move by more than 1 meter
+
+
+## Average L2 [m]
+                               |  Lin | LSTM
+                    biwi_eth/* | 0.71 | 0.78
+                  biwi_hotel/* | 0.56 | 2.23
+               crowds_zara01/* | 0.61 | 0.65
+               crowds_zara02/* | 0.67 | 0.67
+         crowds_uni_examples/* | 0.73 | 0.89
+
+## Average L2 (non-linear sequences) [m]
+                               |  Lin | LSTM
+                    biwi_eth/* | 1.20 | 0.84
+                  biwi_hotel/* | 0.98 | 2.37
+               crowds_zara01/* | 1.13 | 0.83
+               crowds_zara02/* | 1.25 | 0.90
+         crowds_uni_examples/* | 1.43 | 1.22
+
+## Final L2 [m]
+                               |  Lin | LSTM
+                    biwi_eth/* | 1.29 | 1.12
+                  biwi_hotel/* | 0.97 | 3.87
+               crowds_zara01/* | 1.08 | 1.06
+               crowds_zara02/* | 1.19 | 1.12
+         crowds_uni_examples/* | 1.29 | 1.46

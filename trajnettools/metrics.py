@@ -9,7 +9,7 @@ def final_l2(path1_path2):
     return np.linalg.norm((row2.x - row1.x, row2.y - row1.y))
 
 
-def average_l2(path1_path2, n_predictions=12):
+def average_l2(path1_path2, n_predictions=11):
     path1, path2 = path1_path2
     assert len(path1) >= n_predictions
     assert len(path2) >= n_predictions

@@ -29,9 +29,15 @@ def predict(input_files):
     kalman_predictions = (paths
                           .mapValues(lambda paths: paths[0])
                           .mapValues(trajnettools.kalman.predict))
+    lstm_predictor = trajnettools.sociallstm.Predictor.load('output/lstm.pkl')
+    lstm_predictions = (paths
+                        .mapValues(lambda paths: paths[0])
+                        .mapValues(lstm_predictor))
 
-    paths = paths.leftOuterJoin(kalman_predictions)
-    for scene, (gt, kf) in paths.toLocalIterator():
+    paths = (paths
+             .leftOuterJoin(kalman_predictions)
+             .leftOuterJoin(lstm_predictions))
+    for scene, ((gt, kf), lstm) in paths.toLocalIterator():
         output_file = (scene
                        .replace('/train/', '/train_plots/')
                        .replace('/test/', '/test_plots/')
@@ -41,6 +47,11 @@ def predict(input_files):
             ax.plot([gt[0][8].x] + [r.x for r in kf],
                     [gt[0][8].y] + [r.y for r in kf], color='orange', label='KF')
             ax.plot([kf[-1].x], [kf[-1].y], color='orange', marker='x', linestyle='None')
+
+            # LSTM prediction
+            ax.plot([gt[0][8].x] + [r.x for r in lstm],
+                    [gt[0][8].y] + [r.y for r in lstm], color='blue', label='LSTM')
+            ax.plot([lstm[-1].x], [lstm[-1].y], color='blue', marker='x', linestyle='None')
 
             # ground truths
             for i_gt, g in enumerate(gt):
@@ -72,5 +83,5 @@ def predict(input_files):
 
 
 if __name__ == '__main__':
-    # predict('output/test/biwi_eth/?.txt')
-    predict('output/train/biwi_hotel/?.txt')
+    predict('output/test/biwi_eth/?.txt')
+    # predict('output/train/biwi_hotel/?.txt')
