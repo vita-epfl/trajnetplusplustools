@@ -36,7 +36,7 @@ def eval(input_files):
     final_l2['kf'] = paths_kf.values().map(trajnettools.metrics.final_l2).mean()
 
     # LSTM
-    lstm_predictor = trajnettools.sociallstm.Predictor.load('output/lstm.pkl')
+    lstm_predictor = trajnettools.lstm.VanillaPredictor.load('output/vanilla_lstm.pkl')
     lstm_predictions = (paths
                         .mapValues(lambda paths: paths[0])
                         .mapValues(lstm_predictor))

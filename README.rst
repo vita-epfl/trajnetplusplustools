@@ -46,6 +46,11 @@ Extract:
 * the primary pedestrian has to move by more than 1 meter
 
 
+## Training LSTM
+
+`python -m trajnettools.lstm_trainer`
+
+
 ## Average L2 [m]
                                |  Lin | LSTM
                     biwi_eth/* | 0.71 | 0.85
