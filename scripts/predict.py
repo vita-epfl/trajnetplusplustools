@@ -29,7 +29,7 @@ def predict(input_files):
     kalman_predictions = (paths
                           .mapValues(lambda paths: paths[0])
                           .mapValues(trajnettools.kalman.predict))
-    lstm_predictor = trajnettools.sociallstm.Predictor.load('output/lstm.pkl')
+    lstm_predictor = trajnettools.lstm.VanillaPredictor.load('output/vanilla_lstm.pkl')
     lstm_predictions = (paths
                         .mapValues(lambda paths: paths[0])
                         .mapValues(lstm_predictor))
