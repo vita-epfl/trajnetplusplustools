@@ -33,11 +33,14 @@ def predict(input_files):
     lstm_predictions = (paths
                         .mapValues(lambda paths: paths[0])
                         .mapValues(lstm_predictor))
+    olstm_predictor = trajnettools.lstm.VanillaPredictor.load('output/olstm.pkl')
+    olstm_predictions = paths.mapValues(olstm_predictor)
 
     paths = (paths
              .leftOuterJoin(kalman_predictions)
-             .leftOuterJoin(lstm_predictions))
-    for scene, ((gt, kf), lstm) in paths.toLocalIterator():
+             .leftOuterJoin(lstm_predictions)
+             .leftOuterJoin(olstm_predictions))
+    for scene, (((gt, kf), lstm), olstm) in paths.toLocalIterator():
         output_file = (scene
                        .replace('/train/', '/train_plots/')
                        .replace('/test/', '/test_plots/')
@@ -52,6 +55,11 @@ def predict(input_files):
             ax.plot([gt[0][8].x] + [r.x for r in lstm],
                     [gt[0][8].y] + [r.y for r in lstm], color='blue', label='LSTM')
             ax.plot([lstm[-1].x], [lstm[-1].y], color='blue', marker='x', linestyle='None')
+
+            # OLSTM prediction
+            ax.plot([gt[0][8].x] + [r.x for r in olstm],
+                    [gt[0][8].y] + [r.y for r in olstm], color='green', label='O-LSTM')
+            ax.plot([olstm[-1].x], [olstm[-1].y], color='green', marker='x', linestyle='None')
 
             # ground truths
             for i_gt, g in enumerate(gt):
