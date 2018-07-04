@@ -49,17 +49,17 @@ def predict(input_files):
             # KF prediction
             ax.plot([gt[0][8].x] + [r.x for r in kf],
                     [gt[0][8].y] + [r.y for r in kf], color='orange', label='KF')
-            ax.plot([kf[-1].x], [kf[-1].y], color='orange', marker='x', linestyle='None')
+            ax.plot([kf[-1].x], [kf[-1].y], color='orange', marker='o', linestyle='None')
 
             # LSTM prediction
             ax.plot([gt[0][8].x] + [r.x for r in lstm],
                     [gt[0][8].y] + [r.y for r in lstm], color='blue', label='LSTM')
-            ax.plot([lstm[-1].x], [lstm[-1].y], color='blue', marker='x', linestyle='None')
+            ax.plot([lstm[-1].x], [lstm[-1].y], color='blue', marker='o', linestyle='None')
 
             # OLSTM prediction
             ax.plot([gt[0][8].x] + [r.x for r in olstm],
                     [gt[0][8].y] + [r.y for r in olstm], color='green', label='O-LSTM')
-            ax.plot([olstm[-1].x], [olstm[-1].y], color='green', marker='x', linestyle='None')
+            ax.plot([olstm[-1].x], [olstm[-1].y], color='green', marker='o', linestyle='None')
 
             # ground truths
             for i_gt, g in enumerate(gt):
@@ -72,8 +72,8 @@ def predict(input_files):
                 if i_gt == 0:
                     label_start = 'start'
                     label_end = 'end'
-                ax.plot(xs[0:1], ys[0:1], color='black', marker='o', label=label_start, linestyle='None')
-                ax.plot(xs[-1:], ys[-1:], color='black', marker='x', label=label_end, linestyle='None')
+                ax.plot(xs[0:1], ys[0:1], color='black', marker='x', label=label_start, linestyle='None')
+                ax.plot(xs[-1:], ys[-1:], color='black', marker='o', label=label_end, linestyle='None')
 
                 # ground truth lines
                 ls = 'dotted' if i_gt > 0 else 'solid'
@@ -92,4 +92,6 @@ def predict(input_files):
 
 if __name__ == '__main__':
     predict('output/test/biwi_eth/?.txt')
+    predict('output/test/biwi_eth/98.txt')
+    predict('output/test/biwi_eth/362.txt')
     # predict('output/train/biwi_hotel/?.txt')
