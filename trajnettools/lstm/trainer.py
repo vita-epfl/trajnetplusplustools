@@ -3,7 +3,6 @@ import random
 
 import pysparkling
 import torch
-import torch.nn.functional as F
 
 from .. import augmentation
 from .. import readers
@@ -23,12 +22,8 @@ def train_vanilla(scenes, epochs=90):
     model.train()
     for epoch in range(1, epochs + 1):
         print('epoch', epoch)
-        if epoch == 30:
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = 1e-4
-        if epoch == 60:
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = 1e-5
+        adjust_learning_rate(optimizer, 1e-3, epoch)
+
         random.shuffle(scenes)
         epoch_loss = 0.0
         for paths in scenes:
@@ -38,7 +33,7 @@ def train_vanilla(scenes, epochs=90):
             observed = torch.Tensor([[(r.x, r.y)] for r in path[:9]])
             target = torch.Tensor([[(r.x, r.y)] for r in path])
 
-            model.zero_grad()
+            optimizer.zero_grad()
             outputs = model(observed)
 
             velocity_targets = target[2:] - target[1:-1]
@@ -70,21 +65,20 @@ def others_xy_truth(scene):
             for frame in frames]
 
 
-def train_olstm(scenes, vanilla_model, epochs=35, directional=False):
+def train_olstm(scenes, vanilla_model, epochs=90, directional=False):
     model = OLSTM(directional=directional)
-    optimizer = torch.optim.SGD(model.parameters(),
-                                lr=0.01,
-                                momentum=0.9,
-                                weight_decay=1e-4)
+    criterion = PredictionLoss()
+    # optimizer = torch.optim.SGD(model.parameters(),
+    #                             lr=1e-3,
+    #                             momentum=0.9,
+    #                             weight_decay=1e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
+    model.train()
     for epoch in range(1, epochs + 1):
         print('epoch', epoch)
-        if epoch == 15:
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = 0.001
-        if epoch == 25:
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = 0.0001
+        adjust_learning_rate(optimizer, 1e-3, epoch, epoch_step=30)
+
         random.shuffle(scenes)
         epoch_loss = 0.0
         for scene in scenes:
@@ -94,13 +88,12 @@ def train_olstm(scenes, vanilla_model, epochs=35, directional=False):
             observed = torch.Tensor([[(r.x, r.y)] for r in path[:9]])
             target = torch.Tensor([[(r.x, r.y)] for r in path])
 
-            model.zero_grad()
+            optimizer.zero_grad()
             others_xy = others_xy_truth(scene)
             outputs = model(observed, others_xy)
 
             velocity_targets = target[2:] - target[1:-1]
-            velocity_outputs = outputs[1:] - outputs[:-1]
-            loss = F.mse_loss(velocity_outputs, velocity_targets)
+            loss = criterion(outputs, velocity_targets)
 
             loss.backward()
 
@@ -109,6 +102,14 @@ def train_olstm(scenes, vanilla_model, epochs=35, directional=False):
         print('loss', epoch_loss / len(scenes))
 
     return OLSTMPredictor(model, vanilla_model)
+
+
+def adjust_learning_rate(optimizer, start_lr, epoch, epoch_step=30):
+    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
+    lr = start_lr * (0.1 ** (epoch // epoch_step))
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+    return lr
 
 
 def main(input_files):
@@ -120,13 +121,13 @@ def main(input_files):
               .collect())
 
     # Vanilla LSTM training
-    lstm_predictor = train_vanilla(scenes)
-    lstm_predictor.save('output/vanilla_lstm.pkl')
-    # lstm_predictor = VanillaPredictor.load('output/vanilla_lstm.pkl')
+    # lstm_predictor = train_vanilla(scenes)
+    # lstm_predictor.save('output/vanilla_lstm.pkl')
+    lstm_predictor = VanillaPredictor.load('output/vanilla_lstm.pkl')
 
     # O-LSTM training
-    # olstm_predictor = train_olstm(scenes, lstm_predictor.model)
-    # olstm_predictor.save('output/olstm.pkl')
+    olstm_predictor = train_olstm(scenes, lstm_predictor.model)
+    olstm_predictor.save('output/olstm.pkl')
 
     # DO-LSTM training
     # dolstm_predictor = train_olstm(scenes, lstm_predictor.model, directional=True)

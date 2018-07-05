@@ -24,29 +24,33 @@ class VanillaLSTM(torch.nn.Module):
 
         observed shape is (seq, batch, observables)
         """
-        hidden_state = (torch.zeros(1, self.hidden_dim),
-                        torch.zeros(1, self.hidden_dim))
+        batch_size = observed.shape[1]
+        hidden_cell_state = (torch.zeros(batch_size, self.hidden_dim),
+                             torch.zeros(batch_size, self.hidden_dim))
 
-        predicted = []
+        normals = []
+        positions = []
         for obs1, obs2 in zip(observed[:-1], observed[1:]):
             emb = self.input_embeddings(obs2 - obs1)
-            hidden_state = self.lstm(emb, hidden_state)
+            hidden_cell_state = self.lstm(emb, hidden_cell_state)
 
-            normal = self.hidden2normal(hidden_state[0])
-            new_vel = normal[:, :2]
-            predicted.append(normal if self.training else obs2 + new_vel)
+            normal = self.hidden2normal(hidden_cell_state[0])
+            normals.append(normal)
+            new_pos = obs2 + normal[:, :2]
+            positions.append(new_pos)
 
         # the previous loop ends with a velocity prediction, so only need to
         # predict n_predict - 1 times
         for _ in range(n_predict - 1):
-            emb = self.input_embeddings(new_vel.detach())  # DETACH!!!
-            hidden_state = self.lstm(emb, hidden_state)
+            emb = self.input_embeddings((positions[-1] - positions[-2]).detach())  # DETACH!!!
+            hidden_cell_state = self.lstm(emb, hidden_cell_state)
 
-            normal = self.hidden2normal(hidden_state[0])
-            new_vel = normal[:, :2]
-            predicted.append(normal if self.training else predicted[-1] + new_vel)
+            normal = self.hidden2normal(hidden_cell_state[0])
+            normals.append(normal)
+            new_pos = positions[-1] + normal[:, :2]
+            positions.append(new_pos)
 
-        return torch.stack(predicted, dim=0)
+        return torch.stack(normals if self.training else positions, dim=0)
 
 
 class VanillaPredictor(object):
