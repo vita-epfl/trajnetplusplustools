@@ -7,10 +7,10 @@ import torch.nn.functional as F
 
 from . import augmentation
 from . import readers
-from .lstm import occupancy, OLSTM, VanillaLSTM, VanillaPredictor, OLSTMPredictor
+from .lstm import OLSTM, VanillaLSTM, VanillaPredictor, OLSTMPredictor
 
 
-def train_vanilla(paths, epochs=90):
+def train_vanilla(scenes, epochs=90):
     model = VanillaLSTM()
     optimizer = torch.optim.SGD(model.parameters(),
                                 lr=0.01,
@@ -25,9 +25,10 @@ def train_vanilla(paths, epochs=90):
         if epoch == 60:
             for param_group in optimizer.param_groups:
                 param_group['lr'] = 0.0001
-        random.shuffle(paths)
+        random.shuffle(scenes)
         epoch_loss = 0.0
-        for path in paths:
+        for paths in scenes:
+            path = paths[0]
             path = augmentation.random_rotation([path])[0]
 
             observed = torch.Tensor([[(r.x, r.y)] for r in path[:9]])
@@ -44,7 +45,7 @@ def train_vanilla(paths, epochs=90):
 
             optimizer.step()
             epoch_loss += loss.item()
-        print('loss', epoch_loss / len(paths))
+        print('loss', epoch_loss / len(scenes))
 
     return VanillaPredictor(model)
 
@@ -66,8 +67,8 @@ def others_xy_truth(scene):
             for frame in frames]
 
 
-def train_olstm(scenes, vanilla_model, epochs=90):
-    model = OLSTM()
+def train_olstm(scenes, vanilla_model, epochs=35, directional=False):
+    model = OLSTM(directional=directional)
     optimizer = torch.optim.SGD(model.parameters(),
                                 lr=0.01,
                                 momentum=0.9,
@@ -75,10 +76,10 @@ def train_olstm(scenes, vanilla_model, epochs=90):
 
     for epoch in range(1, epochs + 1):
         print('epoch', epoch)
-        if epoch == 30:
+        if epoch == 15:
             for param_group in optimizer.param_groups:
                 param_group['lr'] = 0.001
-        if epoch == 60:
+        if epoch == 25:
             for param_group in optimizer.param_groups:
                 param_group['lr'] = 0.0001
         random.shuffle(scenes)
@@ -91,7 +92,8 @@ def train_olstm(scenes, vanilla_model, epochs=90):
             target = torch.Tensor([[(r.x, r.y)] for r in path])
 
             model.zero_grad()
-            outputs = model(observed, others_xy_truth(scene))
+            others_xy = others_xy_truth(scene)
+            outputs = model(observed, others_xy)
 
             velocity_targets = target[2:] - target[1:-1]
             velocity_outputs = outputs[1:] - outputs[:-1]
@@ -108,22 +110,26 @@ def train_olstm(scenes, vanilla_model, epochs=90):
 
 def main(input_files):
     sc = pysparkling.Context()
-    paths = (sc
-             .wholeTextFiles(input_files)
-             .mapValues(readers.trajnet)
-             .cache())
+    scenes = (sc
+              .wholeTextFiles(input_files)
+              .values()
+              .map(readers.trajnet)
+              .collect())
 
     # Vanilla LSTM training
-    # training_paths = paths.values().map(lambda paths: paths[0]).collect()
-    # lstm_predictor = train_vanilla(training_paths)
+    # lstm_predictor = train_vanilla(scenes)
     # lstm_predictor.save('output/vanilla_lstm.pkl')
     lstm_predictor = VanillaPredictor.load('output/vanilla_lstm.pkl')
 
     # O-LSTM training
-    training_paths = paths.values().collect()
-    olstm_predictor = train_olstm(training_paths, lstm_predictor.model)
+    olstm_predictor = train_olstm(scenes, lstm_predictor.model)
     olstm_predictor.save('output/olstm.pkl')
+
+    # DO-LSTM training
+    # dolstm_predictor = train_olstm(scenes, lstm_predictor.model, directional=True)
+    # dolstm_predictor.save('output/dolstm.pkl')
 
 
 if __name__ == '__main__':
-    main('output/test/biwi_eth/*.txt')
+    # main('output/test/biwi_eth/*.txt')
+    main('output/train/**/*.txt')

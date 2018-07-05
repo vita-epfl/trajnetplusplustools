@@ -4,8 +4,9 @@ import pykalman
 from .data import Row
 
 
-def predict(rows):
-    initial_state_mean = [rows[0].x, 0, rows[0].y, 0]
+def predict(paths):
+    path = paths[0]
+    initial_state_mean = [path[0].x, 0, path[0].y, 0]
 
     transition_matrix = [[1, 1, 0, 0],
                          [0, 1, 0, 0],
@@ -20,15 +21,15 @@ def predict(rows):
                                transition_covariance=1e-5 * np.eye(4),
                                observation_covariance=0.25**2 * np.eye(2),
                                initial_state_mean=initial_state_mean)
-    # kf.em([(r.x, r.y) for r in rows[:9]], em_vars=['transition_matrices',
+    # kf.em([(r.x, r.y) for r in path[:9]], em_vars=['transition_matrices',
     #                                                'observation_matrices'])
-    kf.em([(r.x, r.y) for r in rows[:9]])
-    observed_states, _ = kf.smooth([(r.x, r.y) for r in rows[:9]])
+    kf.em([(r.x, r.y) for r in path[:9]])
+    observed_states, _ = kf.smooth([(r.x, r.y) for r in path[:9]])
 
     # prepare predictions
-    frame_diff = rows[1].frame - rows[0].frame
-    first_frame = rows[-1].frame + frame_diff
-    ped_id = rows[-1].pedestrian
+    frame_diff = path[1].frame - path[0].frame
+    first_frame = path[-1].frame + frame_diff
+    ped_id = path[-1].pedestrian
 
     # sample predictions (first sample corresponds to last state)
     # average 5 sampled predictions

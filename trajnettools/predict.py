@@ -26,21 +26,21 @@ def predict(input_files):
              .wholeTextFiles(input_files)
              .mapValues(trajnettools.readers.trajnet)
              .cache())
-    kalman_predictions = (paths
-                          .mapValues(lambda paths: paths[0])
-                          .mapValues(trajnettools.kalman.predict))
+    kalman_predictions = paths.mapValues(trajnettools.kalman.predict)
     lstm_predictor = trajnettools.lstm.VanillaPredictor.load('output/vanilla_lstm.pkl')
-    lstm_predictions = (paths
-                        .mapValues(lambda paths: paths[0])
-                        .mapValues(lstm_predictor))
+    lstm_predictions = paths.mapValues(lstm_predictor)
     olstm_predictor = trajnettools.lstm.VanillaPredictor.load('output/olstm.pkl')
     olstm_predictions = paths.mapValues(olstm_predictor)
+    olstm_others = paths.mapValues(olstm_predictor.others_xy)
 
-    paths = (paths
-             .leftOuterJoin(kalman_predictions)
-             .leftOuterJoin(lstm_predictions)
-             .leftOuterJoin(olstm_predictions))
-    for scene, (((gt, kf), lstm), olstm) in paths.toLocalIterator():
+    paths = (
+        paths
+        .leftOuterJoin(kalman_predictions)
+        .leftOuterJoin(lstm_predictions).mapValues(lambda v: v[0] + (v[1],))
+        .leftOuterJoin(olstm_predictions).mapValues(lambda v: v[0] + (v[1],))
+        .leftOuterJoin(olstm_others).mapValues(lambda v: v[0] + (v[1],))
+    )
+    for scene, (gt, kf, lstm, olstm, olstm_others) in paths.toLocalIterator():
         output_file = (scene
                        .replace('/train/', '/train_plots/')
                        .replace('/test/', '/test_plots/')
@@ -60,6 +60,15 @@ def predict(input_files):
             ax.plot([gt[0][8].x] + [r.x for r in olstm],
                     [gt[0][8].y] + [r.y for r in olstm], color='green', label='O-LSTM')
             ax.plot([olstm[-1].x], [olstm[-1].y], color='green', marker='o', linestyle='None')
+
+            # LSTM predictions for OLSTM occupancy
+            olstm_others_by_ped = zip(*olstm_others)
+            for olstm_other in olstm_others_by_ped:
+                x = [x for x, _ in olstm_other if x is not None]
+                y = [y for _, y in olstm_other if y is not None]
+                if not x or not y:
+                    continue
+                ax.plot(x, y, color='gray', linestyle='dotted')
 
             # ground truths
             for i_gt, g in enumerate(gt):

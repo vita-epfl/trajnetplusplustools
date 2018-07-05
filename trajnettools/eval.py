@@ -14,9 +14,7 @@ def eval(input_files):
              .cache())
 
     # Kalman Filter (Lin)
-    kalman_predictions = (paths
-                          .mapValues(lambda paths: paths[0])
-                          .mapValues(trajnettools.kalman.predict))
+    kalman_predictions = paths.mapValues(trajnettools.kalman.predict)
     paths_kf = (paths
                 .mapValues(lambda paths: paths[0])
                 .leftOuterJoin(kalman_predictions)
@@ -42,9 +40,7 @@ def eval(input_files):
 
     # LSTM
     lstm_predictor = trajnettools.lstm.VanillaPredictor.load('output/vanilla_lstm.pkl')
-    lstm_predictions = (paths
-                        .mapValues(lambda paths: paths[0])
-                        .mapValues(lstm_predictor))
+    lstm_predictions = paths.mapValues(lstm_predictor)
     paths_lstm = (paths
                   .mapValues(lambda paths: paths[0])
                   .leftOuterJoin(lstm_predictions)
@@ -82,27 +78,43 @@ def main():
     ]
     results = {dataset
                .replace('output/', '')
-               .replace('train/', '')
-               .replace('test/', '')
                .replace('.txt', ''): eval(dataset)
                for dataset in datasets}
 
     print('## Average L2 [m]')
     print('{dataset:>30s} |   N  |  Lin | LSTM | O-LSTM'.format(dataset=''))
     for dataset, (r, _, _) in results.items():
-        print('{dataset:>30s} | {r[N]:>4} | {r[kf]:.2f} | {r[lstm]:.2f} | {r[olstm]:.2f}'.format(dataset=dataset, r=r))
+        print(
+            '{dataset:>30s}'
+            ' | {r[N]:>4}'
+            ' | {r[kf]:.2f}'
+            ' | {r[lstm]:.2f}'
+            ' | {r[olstm]:.2f}'.format(dataset=dataset, r=r)
+        )
 
     print('')
     print('## Average L2 (non-linear sequences) [m]')
     print('{dataset:>30s} |   N  |  Lin | LSTM | O-LSTM'.format(dataset=''))
     for dataset, (_, r, _) in results.items():
-        print('{dataset:>30s} | {r[N]:>4} | {r[kf]:.2f} | {r[lstm]:.2f} | {r[olstm]:.2f}'.format(dataset=dataset, r=r))
+        print(
+            '{dataset:>30s}'
+            ' | {r[N]:>4}'
+            ' | {r[kf]:.2f}'
+            ' | {r[lstm]:.2f}'
+            ' | {r[olstm]:.2f}'.format(dataset=dataset, r=r)
+        )
 
     print('')
     print('## Final L2 [m]')
     print('{dataset:>30s} |   N  |  Lin | LSTM | O-LSTM'.format(dataset=''))
     for dataset, (_, _, r) in results.items():
-        print('{dataset:>30s} | {r[N]:>4} | {r[kf]:.2f} | {r[lstm]:.2f} | {r[olstm]:.2f}'.format(dataset=dataset, r=r))
+        print(
+            '{dataset:>30s}'
+            ' | {r[N]:>4}'
+            ' | {r[kf]:.2f}'
+            ' | {r[lstm]:.2f}'
+            ' | {r[olstm]:.2f}'.format(dataset=dataset, r=r)
+        )
 
 
 if __name__ == '__main__':
