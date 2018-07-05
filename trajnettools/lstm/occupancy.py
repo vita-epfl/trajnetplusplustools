@@ -2,46 +2,7 @@ from collections import defaultdict
 
 import torch
 
-from .data import Row
-
-
-class VanillaLSTM(torch.nn.Module):
-    def __init__(self, embedding_dim=16, hidden_dim=128):
-        super(VanillaLSTM, self).__init__()
-        self.hidden_dim = hidden_dim
-        self.embedding_dim = embedding_dim
-
-        self.input_embeddings = torch.nn.Sequential(
-            torch.nn.Linear(2, embedding_dim),
-            torch.nn.ReLU(),
-        )
-        self.lstm = torch.nn.LSTMCell(embedding_dim, hidden_dim)
-        self.hidden2vel = torch.nn.Linear(hidden_dim, 2)
-
-    def forward(self, observed, n_predict=12):
-        """forward
-
-        observed shape is (seq, batch, observables)
-        """
-        hidden_state = (torch.zeros(1, self.hidden_dim),
-                        torch.zeros(1, self.hidden_dim))
-
-        predicted = []
-        for obs1, obs2 in zip(observed[:-1], observed[1:]):
-            emb = self.input_embeddings(obs2 - obs1)
-            hidden_state = self.lstm(emb, hidden_state)
-
-            new_vel = self.hidden2vel(hidden_state[0])
-            predicted.append(obs2 + new_vel)
-
-        for _ in range(n_predict):
-            emb = self.input_embeddings(new_vel)
-            hidden_state = self.lstm(emb, hidden_state)
-
-            new_vel = self.hidden2vel(hidden_state[0])
-            predicted.append(predicted[-1] + new_vel)
-
-        return torch.stack(predicted, dim=0)
+from ..data import Row
 
 
 class OLSTM(torch.nn.Module):
@@ -115,7 +76,7 @@ def occupancy(_, xy2, __, other_xy2, cell_side=1.0, nx=6, ny=6):
     ]])
 
 
-def directional_occupancy(xy1, xy2, other_xy1, other_xy2, cell_side=1.0, nx=4, ny=4):
+def directional_occupancy(xy1, xy2, other_xy1, other_xy2, cell_side=1.0, nx=6, ny=6):
     """Returns the occupancy."""
     xy1 = xy1[0]
     xy2 = xy2[0]
@@ -143,29 +104,6 @@ def directional_occupancy(xy1, xy2, other_xy1, other_xy2, cell_side=1.0, nx=4, n
         for yy1, yy2 in zip(grid_y[:-1], grid_y[1:])
         for v in is_occupied_with_direction(xx1, yy1, xx2, yy2)
     ]])
-
-
-class VanillaPredictor(object):
-    def __init__(self, model):
-        self.model = model
-
-    def save(self, filename):
-        with open(filename, 'wb') as f:
-            torch.save(self, f)
-
-    @staticmethod
-    def load(filename):
-        with open(filename, 'rb') as f:
-            return torch.load(f)
-
-    def __call__(self, paths, n_predict=12):
-        observed_path = paths[0]
-        ped_id = observed_path[0].pedestrian
-        with torch.no_grad():
-            observed = torch.Tensor([[(r.x, r.y)] for r in observed_path[:9]])
-            outputs = self.model(observed, n_predict)[9-1:]
-
-        return [Row(0, ped_id, x, y) for ((x, y),) in outputs]
 
 
 class OLSTMPredictor(object):

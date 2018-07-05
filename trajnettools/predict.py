@@ -1,7 +1,7 @@
-
 from contextlib import contextmanager
-import matplotlib.pyplot as plt
 import os
+
+import matplotlib.pyplot as plt
 import pysparkling
 import trajnettools
 
@@ -29,9 +29,11 @@ def predict(input_files):
     kalman_predictions = paths.mapValues(trajnettools.kalman.predict)
     lstm_predictor = trajnettools.lstm.VanillaPredictor.load('output/vanilla_lstm.pkl')
     lstm_predictions = paths.mapValues(lstm_predictor)
-    olstm_predictor = trajnettools.lstm.VanillaPredictor.load('output/olstm.pkl')
-    olstm_predictions = paths.mapValues(olstm_predictor)
-    olstm_others = paths.mapValues(olstm_predictor.others_xy)
+    # olstm_predictor = trajnettools.lstm.VanillaPredictor.load('output/olstm.pkl')
+    # olstm_predictions = paths.mapValues(olstm_predictor)
+    # olstm_others = paths.mapValues(olstm_predictor.others_xy)
+    olstm_predictions = paths.mapValues(lambda _: None)
+    olstm_others = paths.mapValues(lambda _: None)
 
     paths = (
         paths
@@ -57,18 +59,20 @@ def predict(input_files):
             ax.plot([lstm[-1].x], [lstm[-1].y], color='blue', marker='o', linestyle='None')
 
             # OLSTM prediction
-            ax.plot([gt[0][8].x] + [r.x for r in olstm],
-                    [gt[0][8].y] + [r.y for r in olstm], color='green', label='O-LSTM')
-            ax.plot([olstm[-1].x], [olstm[-1].y], color='green', marker='o', linestyle='None')
+            if olstm is not None:
+                ax.plot([gt[0][8].x] + [r.x for r in olstm],
+                        [gt[0][8].y] + [r.y for r in olstm], color='green', label='O-LSTM')
+                ax.plot([olstm[-1].x], [olstm[-1].y], color='green', marker='o', linestyle='None')
 
             # LSTM predictions for OLSTM occupancy
-            olstm_others_by_ped = zip(*olstm_others)
-            for olstm_other in olstm_others_by_ped:
-                x = [x for x, _ in olstm_other if x is not None]
-                y = [y for _, y in olstm_other if y is not None]
-                if not x or not y:
-                    continue
-                ax.plot(x, y, color='gray', linestyle='dotted')
+            if olstm_others is not None:
+                olstm_others_by_ped = zip(*olstm_others)
+                for olstm_other in olstm_others_by_ped:
+                    x = [x for x, _ in olstm_other if x is not None]
+                    y = [y for _, y in olstm_other if y is not None]
+                    if not x or not y:
+                        continue
+                    ax.plot(x, y, color='gray', linestyle='dotted')
 
             # ground truths
             for i_gt, g in enumerate(gt):
@@ -81,8 +85,10 @@ def predict(input_files):
                 if i_gt == 0:
                     label_start = 'start'
                     label_end = 'end'
-                ax.plot(xs[0:1], ys[0:1], color='black', marker='x', label=label_start, linestyle='None')
-                ax.plot(xs[-1:], ys[-1:], color='black', marker='o', label=label_end, linestyle='None')
+                ax.plot(xs[0:1], ys[0:1], color='black', marker='x',
+                        label=label_start, linestyle='None')
+                ax.plot(xs[-1:], ys[-1:], color='black', marker='o',
+                        label=label_end, linestyle='None')
 
                 # ground truth lines
                 ls = 'dotted' if i_gt > 0 else 'solid'

@@ -5,26 +5,30 @@ import pysparkling
 import torch
 import torch.nn.functional as F
 
-from . import augmentation
-from . import readers
-from .lstm import OLSTM, VanillaLSTM, VanillaPredictor, OLSTMPredictor
+from .. import augmentation
+from .. import readers
+from .loss import PredictionLoss
+from .occupancy import OLSTM, OLSTMPredictor
+from .vanilla import VanillaLSTM, VanillaPredictor
 
 
 def train_vanilla(scenes, epochs=90):
     model = VanillaLSTM()
+    criterion = PredictionLoss()
     optimizer = torch.optim.SGD(model.parameters(),
-                                lr=0.01,
+                                lr=1e-3,
                                 momentum=0.9,
                                 weight_decay=1e-4)
 
+    model.train()
     for epoch in range(1, epochs + 1):
         print('epoch', epoch)
         if epoch == 30:
             for param_group in optimizer.param_groups:
-                param_group['lr'] = 0.001
+                param_group['lr'] = 1e-4
         if epoch == 60:
             for param_group in optimizer.param_groups:
-                param_group['lr'] = 0.0001
+                param_group['lr'] = 1e-5
         random.shuffle(scenes)
         epoch_loss = 0.0
         for paths in scenes:
@@ -38,8 +42,7 @@ def train_vanilla(scenes, epochs=90):
             outputs = model(observed)
 
             velocity_targets = target[2:] - target[1:-1]
-            velocity_outputs = outputs[1:] - outputs[:-1]
-            loss = F.mse_loss(velocity_outputs, velocity_targets)
+            loss = criterion(outputs, velocity_targets)
 
             loss.backward()
 
@@ -117,13 +120,13 @@ def main(input_files):
               .collect())
 
     # Vanilla LSTM training
-    # lstm_predictor = train_vanilla(scenes)
-    # lstm_predictor.save('output/vanilla_lstm.pkl')
-    lstm_predictor = VanillaPredictor.load('output/vanilla_lstm.pkl')
+    lstm_predictor = train_vanilla(scenes)
+    lstm_predictor.save('output/vanilla_lstm.pkl')
+    # lstm_predictor = VanillaPredictor.load('output/vanilla_lstm.pkl')
 
     # O-LSTM training
-    olstm_predictor = train_olstm(scenes, lstm_predictor.model)
-    olstm_predictor.save('output/olstm.pkl')
+    # olstm_predictor = train_olstm(scenes, lstm_predictor.model)
+    # olstm_predictor.save('output/olstm.pkl')
 
     # DO-LSTM training
     # dolstm_predictor = train_olstm(scenes, lstm_predictor.model, directional=True)
@@ -131,5 +134,5 @@ def main(input_files):
 
 
 if __name__ == '__main__':
-    # main('output/test/biwi_eth/*.txt')
-    main('output/train/**/*.txt')
+    main('output/test/biwi_eth/*.txt')
+    # main('output/train/**/*.txt')
