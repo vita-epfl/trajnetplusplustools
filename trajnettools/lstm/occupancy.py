@@ -3,6 +3,7 @@ from collections import defaultdict
 import torch
 
 from ..data import Row
+from .modules import Hidden2Normal, InputEmbedding
 
 
 class OLSTM(torch.nn.Module):
@@ -12,15 +13,12 @@ class OLSTM(torch.nn.Module):
         self.embedding_dim = embedding_dim
         self.grid_fn = occupancy if not directional else directional_occupancy
 
-        self.input_embeddings = torch.nn.Sequential(
-            torch.nn.Linear(2, embedding_dim),
-            torch.nn.ReLU(),
-        )
-        self.lstm = torch.nn.LSTMCell(embedding_dim + 36, hidden_dim)
+        self.input_embeddings = InputEmbedding(self.embedding_dim, 4.0)
+        self.lstm = torch.nn.LSTMCell(self.embedding_dim + 36, self.hidden_dim)
 
         # Predict the parameters of a multivariate normal:
         # mu_vel_x, mu_vel_y, sigma_vel_x, sigma_vel_y, rho
-        self.hidden2normal = torch.nn.Linear(hidden_dim, 5)
+        self.hidden2normal = Hidden2Normal(self.hidden_dim)
 
     def forward(self, observed, other_paths):
         """forward
@@ -30,6 +28,7 @@ class OLSTM(torch.nn.Module):
         batch_size = observed.shape[1]
         hidden_cell_state = (torch.zeros(batch_size, self.hidden_dim),
                              torch.zeros(batch_size, self.hidden_dim))
+        # hidden_cell_state = self.lstm(self.input_embeddings.start_tag(), hidden_cell_state)
 
         normals = []
         positions = []
@@ -44,47 +43,44 @@ class OLSTM(torch.nn.Module):
 
             normal = self.hidden2normal(hidden_cell_state[0])
             normals.append(normal)
-            new_pos = obs2 + normal[:, :2]
-            positions.append(new_pos)
+            positions.append(obs2 + normal[:, :2])
 
         # end one coordinate before the end so that it won't predict past the
         # last coordinate
         for others_obs1, others_obs2 in zip(other_paths[len(observed) - 1:-2],
                                             other_paths[len(observed):-1]):
+            input_vel = (positions[-1] - positions[-2]).detach()  # DETACH!!!
             emb = torch.cat([
-                self.input_embeddings((positions[-1] - positions[-2]).detach()),  # DETACH!!!!!
+                self.input_embeddings(input_vel),
                 self.grid_fn(positions[-2], positions[-1], others_obs1, others_obs2),
             ], dim=1)
             hidden_cell_state = self.lstm(emb, hidden_cell_state)
 
             normal = self.hidden2normal(hidden_cell_state[0])
             normals.append(normal)
-            new_pos = positions[-1] + normal[:, :2]
-            positions.append(new_pos)
+            positions.append(positions[-1] + normal[:, :2])
 
         return torch.stack(normals if self.training else positions, dim=0)
 
 
-def occupancy(_, xy2, __, other_xy2, cell_side=0.5, nx=6, ny=6):
+def occupancy(_, xy2, __, other_xy2, cell_side=0.5, n=6):
     """Returns the occupancy."""
 
-    def is_occupied(x_min, y_min, x_max, y_max):
-        for x, y in other_xy2:
-            if x is None or y is None:
-                continue
-            if x_min < x and x < x_max and y_min < y and y < y_max:
-                return True
+    xy = xy2[0]
+    oxy = torch.Tensor([o for o in other_xy2 if o[0] is not None])
+    if not oxy.shape[0]:
+        return torch.zeros(1, n * n)
 
-        return False
+    oij = ((oxy - xy) / cell_side + n / 2)
+    range_violations = torch.sum((oij < 0) + (oij >= n), dim=1)
+    oij = oij[range_violations == 0, :].long()
+    if oij.shape[0] == 0:
+        return torch.zeros(1, n * n)
+    oi = (oij[:, 0] * n + oij[:, 1])
+    occ = torch.zeros(1, n * n)
+    occ[:, oi] = 1
 
-    x, y = xy2[0]
-    grid_x = torch.linspace(-nx/2 * cell_side, nx/2 * cell_side, nx + 1) + x
-    grid_y = torch.linspace(-ny/2 * cell_side, ny/2 * cell_side, ny + 1) + y
-    return torch.Tensor([[
-        is_occupied(xx1, yy1, xx2, yy2)
-        for xx1, xx2 in zip(grid_x[:-1], grid_x[1:])
-        for yy1, yy2 in zip(grid_y[:-1], grid_y[1:])
-    ]])
+    return occ
 
 
 def directional_occupancy(xy1, xy2, other_xy1, other_xy2, cell_side=0.5, nx=6, ny=6):
@@ -151,10 +147,12 @@ class OLSTMPredictor(object):
         predicted = {}
         for ped_id in pedestrians_to_predict:
             xy = [[xy] for _, xy in sorted(others_xy[ped_id].items())]
-            if len(xy) < 3:
+            if len(xy) < 4:
                 continue
             observed = torch.Tensor(xy)
-            output = self.model_vanilla(observed, n_predict)[len(observed) - 2:]
+            with torch.no_grad():
+                output = self.model_vanilla(observed, n_predict=n_predict)
+                output = output[-n_predict:].numpy()
             predicted[ped_id] = [xy for (xy,) in output]
 
         # preserve order
@@ -179,6 +177,6 @@ class OLSTMPredictor(object):
             observed = torch.Tensor([[(r.x, r.y)] for r in observed_path[:9]])
 
             others_xy = self.others_xy(paths, n_predict)
-            outputs = self.model(observed, others_xy)[9-1:]
+            outputs = self.model(observed, others_xy)[-n_predict:]
 
         return [Row(0, ped_id, x, y) for ((x, y),) in outputs]

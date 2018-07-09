@@ -27,13 +27,13 @@ def predict(input_files):
              .mapValues(trajnettools.readers.trajnet)
              .cache())
     kalman_predictions = paths.mapValues(trajnettools.kalman.predict)
-    lstm_predictor = trajnettools.lstm.VanillaPredictor.load('output/vanilla_lstm.pkl')
+    lstm_predictor = trajnettools.lstm.LSTMPredictor.load('output/vanilla_lstm.pkl')
     lstm_predictions = paths.mapValues(lstm_predictor)
-    olstm_predictor = trajnettools.lstm.VanillaPredictor.load('output/olstm.pkl')
-    olstm_predictions = paths.mapValues(olstm_predictor)
-    olstm_others = paths.mapValues(olstm_predictor.others_xy)
-    # olstm_predictions = paths.mapValues(lambda _: None)
-    # olstm_others = paths.mapValues(lambda _: None)
+    # olstm_predictor = trajnettools.lstm.VanillaPredictor.load('output/olstm.pkl')
+    # olstm_predictions = paths.mapValues(olstm_predictor)
+    # olstm_others = paths.mapValues(olstm_predictor.others_xy)
+    olstm_predictions = paths.mapValues(lambda _: None)
+    olstm_others = paths.mapValues(lambda _: None)
 
     paths = (
         paths

@@ -13,5 +13,5 @@ def rotate_path(path, theta):
 
 
 def random_rotation(paths):
-    theta = random.random() * 2 * math.pi
+    theta = random.random() * 2.0 * math.pi
     return [rotate_path(path, theta) for path in paths]

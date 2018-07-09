@@ -1,4 +1,4 @@
-from collections import defaultdict
+import time
 import random
 
 import pysparkling
@@ -7,127 +7,134 @@ import torch
 from .. import augmentation
 from .. import readers
 from .loss import PredictionLoss
-from .occupancy import OLSTM, OLSTMPredictor
-from .vanilla import VanillaLSTM, VanillaPredictor
+from .lstm import LSTM, LSTMPredictor, scene_to_xy
 
 
-def train_vanilla(scenes, epochs=90):
-    model = VanillaLSTM()
-    criterion = PredictionLoss()
-    optimizer = torch.optim.SGD(model.parameters(),
-                                lr=1e-3,
-                                momentum=0.9,
-                                weight_decay=1e-4)
+class Trainer(object):
+    def __init__(self, model=None, criterion=None, optimizer=None, lr_scheduler=None):
+        self.model = model if model is not None else LSTM()
+        self.criterion = criterion if criterion is not None else PredictionLoss()
+        self.optimizer = optimizer if optimizer is not None else torch.optim.SGD(
+            self.model.parameters(), lr=1e-3, momentum=0.9, weight_decay=1e-4)
+        self.lr_scheduler = (lr_scheduler
+                             if lr_scheduler is not None
+                             else torch.optim.lr_scheduler.StepLR(self.optimizer, 30))
 
-    model.train()
-    for epoch in range(1, epochs + 1):
-        print('epoch', epoch)
-        adjust_learning_rate(optimizer, 1e-3, epoch)
+    def train(self, scenes, eval_scenes, epochs=100):
+        for epoch in range(1, epochs + 1):
+            start_time = time.time()
+            preprocess_time = 0.0
+            optim_time = 0.0
 
-        random.shuffle(scenes)
-        epoch_loss = 0.0
-        for paths in scenes:
-            path = paths[0]
-            path = augmentation.random_rotation([path])[0]
+            print('epoch', epoch)
+            self.lr_scheduler.step()
 
-            observed = torch.Tensor([[(r.x, r.y)] for r in path[:9]])
-            target = torch.Tensor([[(r.x, r.y)] for r in path])
+            random.shuffle(scenes)
+            epoch_loss = 0.0
+            self.model.train()
+            for scene_i, scene in enumerate(scenes):
+                scene_start = time.time()
+                scene = augmentation.random_rotation(scene)
+                xy = scene_to_xy(scene)
+                preprocess_time += time.time() - scene_start
 
-            optimizer.zero_grad()
-            outputs = model(observed)
+                optim_start = time.time()
+                loss = self.train_batch(xy)
+                optim_time += time.time() - optim_start
 
-            velocity_targets = target[2:] - target[1:-1]
-            loss = criterion(outputs, velocity_targets)
+                epoch_loss += loss
 
-            loss.backward()
+                if scene_i % 100 == 0:
+                    print({
+                        'type': 'train',
+                        'epoch': epoch,
+                        'batch': scene_i,
+                        'n_batch': len(scenes),
+                        'loss': loss,
+                    })
 
-            optimizer.step()
-            epoch_loss += loss.item()
-        print('loss', epoch_loss / len(scenes))
+            eval_loss = 0.0
+            eval_start = time.time()
+            self.model.train()  # so that it does not return positions but still normals
+            for scene in eval_scenes:
+                xy = scene_to_xy(scene)
+                eval_loss += self.eval_batch(xy)
+            eval_time = time.time() - eval_start
 
-    return VanillaPredictor(model)
+            print({
+                'train_loss': epoch_loss / len(scenes),
+                'eval_loss': eval_loss / len(eval_scenes),
+                'duration': time.time() - start_time,
+                'preprocess_time': preprocess_time,
+                'optim_time': optim_time,
+                'eval_time': eval_time,
+            })
+
+    def train_batch(self, xy):
+        observed = xy[:9]
+        prediction_truth = xy[9:-1].clone()  ## CLONE
+
+        self.optimizer.zero_grad()
+        outputs = self.model(observed, prediction_truth)
+
+        targets = xy[2:, 0] - xy[1:-1, 0]
+        loss = self.criterion(outputs, targets)
+        loss.backward()
+
+        self.optimizer.step()
+        return loss.item()
+
+    def eval_batch(self, xy):
+        observed = xy[:9]
+        prediction_truth = xy[9:-1].clone()  ## CLONE
+
+        with torch.no_grad():
+            outputs = self.model(observed, prediction_truth)
+
+            targets = xy[2:, 0] - xy[1:-1, 0]
+            loss = self.criterion(outputs, targets)
+
+        return loss.item()
 
 
-def others_xy_truth(scene):
-    others_xy = defaultdict(dict)
-    frames = [r.frame for r in scene[0]]
-    pedestrians = set()
-    for path in scene[1:]:
-        for row in path:
-            others_xy[row.pedestrian][row.frame] = (row.x, row.y)
-            pedestrians.add(row.pedestrian)
-
-    # preserve order
-    pedestrians = list(pedestrians)
-
-    return [[others_xy.get(ped_id, {}).get(frame, (None, None))
-             for ped_id in pedestrians]
-            for frame in frames]
-
-
-def train_olstm(scenes, vanilla_model, epochs=90, directional=False):
-    model = OLSTM(directional=directional)
-    criterion = PredictionLoss()
-    # optimizer = torch.optim.SGD(model.parameters(),
-    #                             lr=1e-3,
-    #                             momentum=0.9,
-    #                             weight_decay=1e-4)
+def train_vanilla(scenes, eval_scenes):
+    model = LSTM()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-
-    model.train()
-    for epoch in range(1, epochs + 1):
-        print('epoch', epoch)
-        adjust_learning_rate(optimizer, 1e-3, epoch, epoch_step=30)
-
-        random.shuffle(scenes)
-        epoch_loss = 0.0
-        for scene in scenes:
-            scene = augmentation.random_rotation(scene)
-            path = scene[0]
-
-            observed = torch.Tensor([[(r.x, r.y)] for r in path[:9]])
-            target = torch.Tensor([[(r.x, r.y)] for r in path])
-
-            optimizer.zero_grad()
-            others_xy = others_xy_truth(scene)
-            outputs = model(observed, others_xy)
-
-            velocity_targets = target[2:] - target[1:-1]
-            loss = criterion(outputs, velocity_targets)
-
-            loss.backward()
-
-            optimizer.step()
-            epoch_loss += loss.item()
-        print('loss', epoch_loss / len(scenes))
-
-    return OLSTMPredictor(model, vanilla_model)
+    trainer = Trainer(model, optimizer=optimizer)
+    trainer.train(scenes, eval_scenes)
+    return LSTMPredictor(trainer.model)
 
 
-def adjust_learning_rate(optimizer, start_lr, epoch, epoch_step=30):
-    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-    lr = start_lr * (0.1 ** (epoch // epoch_step))
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = lr
-    return lr
+def train_olstm(scenes, vanilla_model, directional=False):
+    model = OLSTM(directional=directional)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    trainer = Trainer(model, optimizer=optimizer)
+    trainer.train(scenes)
+    return OLSTMPredictor(trainer.model, vanilla_model)
 
 
-def main(input_files):
+def main(train_input_files, eval_input_files):
     sc = pysparkling.Context()
     scenes = (sc
-              .wholeTextFiles(input_files)
+              .wholeTextFiles(train_input_files)
               .values()
               .map(readers.trajnet)
               .collect())
 
+    eval_scenes = (sc
+                   .wholeTextFiles(eval_input_files)
+                   .values()
+                   .map(readers.trajnet)
+                   .collect())
+
     # Vanilla LSTM training
-    # lstm_predictor = train_vanilla(scenes)
-    # lstm_predictor.save('output/vanilla_lstm.pkl')
-    lstm_predictor = VanillaPredictor.load('output/vanilla_lstm.pkl')
+    lstm_predictor = train_vanilla(scenes, eval_scenes)
+    lstm_predictor.save('output/vanilla_lstm.pkl')
+    # lstm_predictor = VanillaPredictor.load('output/vanilla_lstm.pkl')
 
     # O-LSTM training
-    olstm_predictor = train_olstm(scenes, lstm_predictor.model)
-    olstm_predictor.save('output/olstm.pkl')
+    # olstm_predictor = train_olstm(scenes, lstm_predictor.model)
+    # olstm_predictor.save('output/olstm.pkl')
 
     # DO-LSTM training
     # dolstm_predictor = train_olstm(scenes, lstm_predictor.model, directional=True)
@@ -135,5 +142,5 @@ def main(input_files):
 
 
 if __name__ == '__main__':
-    main('output/test/biwi_eth/*.txt')
-    # main('output/train/**/*.txt')
+    # main('output/train/biwi_hotel/*.txt', 'output/test/biwi_eth/*.txt')
+    main('output/train/**/*.txt', 'output/test/**/*.txt')

@@ -39,7 +39,7 @@ def eval(input_files):
     final_l2['kf'] = paths_kf.values().map(trajnettools.metrics.final_l2).mean()
 
     # LSTM
-    lstm_predictor = trajnettools.lstm.VanillaPredictor.load('output/vanilla_lstm.pkl')
+    lstm_predictor = trajnettools.lstm.LSTMPredictor.load('output/vanilla_lstm.pkl')
     lstm_predictions = paths.mapValues(lstm_predictor)
     paths_lstm = (paths
                   .mapValues(lambda paths: paths[0])
@@ -51,7 +51,8 @@ def eval(input_files):
     final_l2['lstm'] = paths_lstm.values().map(trajnettools.metrics.final_l2).mean()
 
     # OLSTM
-    olstm_predictor = trajnettools.lstm.OLSTMPredictor.load('output/olstm.pkl')
+    # olstm_predictor = trajnettools.lstm.OLSTMPredictor.load('output/olstm.pkl')
+    olstm_predictor = trajnettools.lstm.LSTMPredictor.load('output/vanilla_lstm.pkl')
     olstm_predictions = paths.mapValues(olstm_predictor)
     paths_olstm = (paths
                    .mapValues(lambda paths: paths[0])
