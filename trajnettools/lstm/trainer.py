@@ -99,7 +99,7 @@ class Trainer(object):
 
 def train_vanilla(scenes, eval_scenes):
     model = LSTM()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
     trainer = Trainer(model, optimizer=optimizer)
     trainer.train(scenes, eval_scenes)
     return LSTMPredictor(trainer.model)
@@ -107,7 +107,7 @@ def train_vanilla(scenes, eval_scenes):
 
 def train_olstm(scenes, vanilla_model, directional=False):
     model = OLSTM(directional=directional)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
     trainer = Trainer(model, optimizer=optimizer)
     trainer.train(scenes)
     return OLSTMPredictor(trainer.model, vanilla_model)

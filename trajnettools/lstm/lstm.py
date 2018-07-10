@@ -57,7 +57,7 @@ class LSTM(torch.nn.Module):
         # step
         coordinate_emb = self.input_embedding(obs2 - obs1)
         if self.pool is not None:
-            hidden_cell_masked[0] += self.pool(obs1, obs2, hidden_cell_masked[0])
+            hidden_cell_masked[0] += self.pool(hidden_cell_masked[0], obs1, obs2)
         hidden_cell_masked = lstm(coordinate_emb, hidden_cell_masked)
         normal_masked = self.hidden2normal(hidden_cell_masked[0])
 

@@ -55,8 +55,8 @@ class Hidden2Normal(torch.nn.Module):
         normal = self.linear(hidden_state)
 
         # numerically stable output ranges
-        normal[:, 2] = 0.01 + torch.sigmoid(normal[:, 2])  # sigma 1
-        normal[:, 3] = 0.01 + torch.sigmoid(normal[:, 3])  # sigma 2
+        normal[:, 2] = 0.01 + 0.2 * torch.sigmoid(normal[:, 2])  # sigma 1
+        normal[:, 3] = 0.01 + 0.2 * torch.sigmoid(normal[:, 3])  # sigma 2
         normal[:, 4] = 0.7 * torch.sigmoid(normal[:, 4])  # rho
 
         return normal
