@@ -33,23 +33,31 @@ class OccupancyPooling(torch.nn.Module):
             for i in range(n)
         ], dim=0)
 
-    def occupancy(self, xy, other_xy):
+    def occupancy(self, xy, other_xy, other_values=None):
         """Returns the occupancy."""
+        unit_dim = other_values.size(1) if other_values is not None else 1
+
         if xy[0] != xy[0] or \
            other_xy.size(0) == 0:
-            return torch.zeros(self.n * self.n)
+            return torch.zeros(self.n * self.n * unit_dim)
 
-        oxy = other_xy[torch.isnan(other_xy[:, 0]) == 0]
-        if not oxy.shape[0]:
-            return torch.zeros(self.n * self.n)
+        if other_values is None:
+            other_values = torch.ones(other_xy.size(0), 1)
+
+        mask = torch.isnan(other_xy[:, 0]) == 0
+        oxy = other_xy[mask]
+        other_values = other_values[mask]
+        if not oxy.size(0):
+            return torch.zeros(self.n * self.n * unit_dim)
 
         oij = ((oxy - xy) / self.cell_side + self.n / 2)
         range_violations = torch.sum((oij < 0) + (oij >= self.n), dim=1)
         oij = oij[range_violations == 0, :].long()
-        if oij.shape[0] == 0:
-            return torch.zeros(self.n * self.n)
+        if oij.size(0) == 0:
+            return torch.zeros(self.n * self.n * unit_dim)
         oi = oij[:, 0] * self.n + oij[:, 1]
-        occ = torch.zeros(self.n * self.n)
-        occ[oi] = 1
+        occ = torch.zeros(self.n * self.n, unit_dim)
+        for oii, v in zip(oi, other_values):
+            occ[oii, :] += v
 
-        return occ
+        return occ.view(-1)
