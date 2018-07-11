@@ -40,7 +40,6 @@ class LSTM(torch.nn.Module):
         self.pool = pool
         self.encoder = torch.nn.LSTMCell(self.embedding_dim, self.hidden_dim)
         self.decoder = torch.nn.LSTMCell(self.embedding_dim, self.hidden_dim)
-        # self.decoder = self.encoder
 
         # Predict the parameters of a multivariate normal:
         # mu_vel_x, mu_vel_y, sigma_vel_x, sigma_vel_y, rho
@@ -64,7 +63,7 @@ class LSTM(torch.nn.Module):
         # unmask
         hidden_cell_state[0][track_mask] = hidden_cell_masked[0]
         hidden_cell_state[1][track_mask] = hidden_cell_masked[1]
-        normal = torch.full((obs1.size(0), 5), NAN)
+        normal = torch.full((track_mask.size(0), 5), NAN)
         normal[track_mask] = normal_masked
 
         return hidden_cell_state, normal

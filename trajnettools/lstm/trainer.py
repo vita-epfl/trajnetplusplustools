@@ -1,3 +1,4 @@
+import argparse
 import time
 import random
 
@@ -8,6 +9,7 @@ from .. import augmentation
 from .. import readers
 from .loss import PredictionLoss
 from .lstm import LSTM, LSTMPredictor, scene_to_xy
+from .occupancy import OccupancyPooling
 
 
 class Trainer(object):
@@ -18,9 +20,9 @@ class Trainer(object):
             self.model.parameters(), lr=1e-3, momentum=0.9, weight_decay=1e-4)
         self.lr_scheduler = (lr_scheduler
                              if lr_scheduler is not None
-                             else torch.optim.lr_scheduler.StepLR(self.optimizer, 30))
+                             else torch.optim.lr_scheduler.StepLR(self.optimizer, 10))
 
-    def train(self, scenes, eval_scenes, epochs=100):
+    def train(self, scenes, eval_scenes, epochs=35):
         for epoch in range(1, epochs + 1):
             start_time = time.time()
             preprocess_time = 0.0
@@ -71,13 +73,28 @@ class Trainer(object):
             })
 
     def train_batch(self, xy):
+        # augmentation: random coordinate shifts
+        # noise = (torch.rand_like(xy) - 0.5) * 2.0 * 0.03
+        # xy += noise
+
+        # augmentation: random stretching
+        # x_scale = 0.9 + 0.2 * random.random()
+        # y_scale = 0.9 + 0.2 * random.random()
+        # xy[:, :, 0] *= x_scale
+        # xy[:, :, 1] *= y_scale
+
         observed = xy[:9]
         prediction_truth = xy[9:-1].clone()  ## CLONE
+        targets = xy[2:, 0] - xy[1:-1, 0]
+
+        # augmentation: vary the length of the observed data a bit
+        # truncate_n = int(random.random() * 4.0)
+        # observed = observed[truncate_n:]
+        # targets = targets[truncate_n:]
 
         self.optimizer.zero_grad()
         outputs = self.model(observed, prediction_truth)
 
-        targets = xy[2:, 0] - xy[1:-1, 0]
         loss = self.criterion(outputs, targets)
         loss.backward()
 
@@ -97,48 +114,42 @@ class Trainer(object):
         return loss.item()
 
 
-def train_vanilla(scenes, eval_scenes):
-    model = LSTM()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
-    trainer = Trainer(model, optimizer=optimizer)
-    trainer.train(scenes, eval_scenes)
-    return LSTMPredictor(trainer.model)
-
-
-def train_olstm(scenes, vanilla_model, directional=False):
-    model = OLSTM(directional=directional)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
-    trainer = Trainer(model, optimizer=optimizer)
-    trainer.train(scenes)
-    return OLSTMPredictor(trainer.model, vanilla_model)
-
-
 def main(train_input_files, eval_input_files):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--type', default='vanilla', choices=('vanilla', 'occupancy',),
+                        help='type of LSTM to train')
+    parser.add_argument('--train-input-files', default='output/train/**/*.txt',
+                        help='glob expression for train input files')
+    parser.add_argument('--test-input-files', default='output/test/**/*.txt',
+                        help='glob expression for test input files')
+    parser.add_argument('-o', '--output', default=None,
+                        help='output file')
+    args = parser.parse_args()
+
+    pool = None
+    if args.type == 'occupancy':
+        pool = OccupancyPooling()
+
+    if args.output is None:
+        args.output = 'output/' + args.type + '_lstm.pkl'
+
     sc = pysparkling.Context()
     scenes = (sc
               .wholeTextFiles(train_input_files)
               .values()
               .map(readers.trajnet)
               .collect())
-
     eval_scenes = (sc
                    .wholeTextFiles(eval_input_files)
                    .values()
                    .map(readers.trajnet)
                    .collect())
 
-    # Vanilla LSTM training
-    lstm_predictor = train_vanilla(scenes, eval_scenes)
-    lstm_predictor.save('output/vanilla_lstm.pkl')
-    # lstm_predictor = VanillaPredictor.load('output/vanilla_lstm.pkl')
-
-    # O-LSTM training
-    # olstm_predictor = train_olstm(scenes, lstm_predictor.model)
-    # olstm_predictor.save('output/olstm.pkl')
-
-    # DO-LSTM training
-    # dolstm_predictor = train_olstm(scenes, lstm_predictor.model, directional=True)
-    # dolstm_predictor.save('output/dolstm.pkl')
+    model = LSTM(pool=pool)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
+    trainer = Trainer(model, optimizer=optimizer)
+    trainer.train(scenes, eval_scenes)
+    LSTMPredictor(trainer.model).save(args.output)
 
 
 if __name__ == '__main__':
