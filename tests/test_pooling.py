@@ -6,7 +6,7 @@ NAN = float('nan')
 
 
 def test_simple_grid():
-    pool = trajnettools.lstm.OccupancyPooling(n=2)
+    pool = trajnettools.lstm.Pooling(n=2)
     obs = torch.Tensor([
         [0.0, 0.0],
         [-0.2, -0.2],
@@ -22,7 +22,7 @@ def test_simple_grid():
 
 
 def test_nan():
-    pool = trajnettools.lstm.OccupancyPooling(n=2)
+    pool = trajnettools.lstm.Pooling(n=2)
     obs = torch.Tensor([
         [0.0, 0.0],
         [NAN, NAN],
@@ -38,7 +38,7 @@ def test_nan():
 
 
 def test_embedding_shape():
-    pool = trajnettools.lstm.OccupancyPooling(n=2, hidden_dim=128)
+    pool = trajnettools.lstm.Pooling(n=2, hidden_dim=128)
     obs = torch.Tensor([
         [0.0, 0.0],
         [-0.2, -0.2],

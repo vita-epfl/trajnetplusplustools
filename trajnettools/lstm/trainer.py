@@ -9,7 +9,7 @@ from .. import augmentation
 from .. import readers
 from .loss import PredictionLoss
 from .lstm import LSTM, LSTMPredictor, scene_to_xy
-from .occupancy import OccupancyPooling
+from .pooling import Pooling
 
 
 class Trainer(object):
@@ -22,7 +22,7 @@ class Trainer(object):
                              if lr_scheduler is not None
                              else torch.optim.lr_scheduler.StepLR(self.optimizer, 10))
 
-    def train(self, scenes, eval_scenes, epochs=35):
+    def train(self, scenes, val_scenes, epochs=35):
         for epoch in range(1, epochs + 1):
             start_time = time.time()
             preprocess_time = 0.0
@@ -55,17 +55,17 @@ class Trainer(object):
                         'loss': loss,
                     })
 
-            eval_loss = 0.0
+            val_loss = 0.0
             eval_start = time.time()
             self.model.train()  # so that it does not return positions but still normals
-            for scene in eval_scenes:
+            for scene in val_scenes:
                 xy = scene_to_xy(scene)
-                eval_loss += self.eval_batch(xy)
+                val_loss += self.val_batch(xy)
             eval_time = time.time() - eval_start
 
             print({
                 'train_loss': epoch_loss / len(scenes),
-                'eval_loss': eval_loss / len(eval_scenes),
+                'val_loss': val_loss / len(val_scenes),
                 'duration': time.time() - start_time,
                 'preprocess_time': preprocess_time,
                 'optim_time': optim_time,
@@ -101,7 +101,7 @@ class Trainer(object):
         self.optimizer.step()
         return loss.item()
 
-    def eval_batch(self, xy):
+    def val_batch(self, xy):
         observed = xy[:9]
         prediction_truth = xy[9:-1].clone()  ## CLONE
 
@@ -114,44 +114,46 @@ class Trainer(object):
         return loss.item()
 
 
-def main(train_input_files, eval_input_files):
+def main(epochs=35):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--type', default='vanilla', choices=('vanilla', 'occupancy',),
+    parser.add_argument('--epochs', default=epochs,
+                        help='number of epochs')
+    parser.add_argument('--type', default='vanilla',
+                        choices=('vanilla', 'occupancy', 'directional', 'social'),
                         help='type of LSTM to train')
     parser.add_argument('--train-input-files', default='output/train/**/*.txt',
                         help='glob expression for train input files')
-    parser.add_argument('--test-input-files', default='output/test/**/*.txt',
-                        help='glob expression for test input files')
+    parser.add_argument('--val-input-files', default='output/val/**/*.txt',
+                        help='glob expression for validation input files')
     parser.add_argument('-o', '--output', default=None,
                         help='output file')
     args = parser.parse_args()
 
     pool = None
-    if args.type == 'occupancy':
-        pool = OccupancyPooling()
+    if args.type != 'vanilla':
+        pool = Pooling(type_=args.type)
 
     if args.output is None:
         args.output = 'output/' + args.type + '_lstm.pkl'
 
     sc = pysparkling.Context()
     scenes = (sc
-              .wholeTextFiles(train_input_files)
+              .wholeTextFiles(args.train_input_files)
               .values()
               .map(readers.trajnet)
               .collect())
-    eval_scenes = (sc
-                   .wholeTextFiles(eval_input_files)
-                   .values()
-                   .map(readers.trajnet)
-                   .collect())
+    val_scenes = (sc
+                  .wholeTextFiles(args.val_input_files)
+                  .values()
+                  .map(readers.trajnet)
+                  .collect())
 
     model = LSTM(pool=pool)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
     trainer = Trainer(model, optimizer=optimizer)
-    trainer.train(scenes, eval_scenes)
+    trainer.train(scenes, val_scenes, epochs=args.epochs)
     LSTMPredictor(trainer.model).save(args.output)
 
 
 if __name__ == '__main__':
-    # main('output/train/biwi_hotel/*.txt', 'output/test/biwi_eth/*.txt')
-    main('output/train/**/*.txt', 'output/test/**/*.txt')
+    main()

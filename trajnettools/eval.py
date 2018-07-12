@@ -52,7 +52,7 @@ def eval(input_files):
 
     # OLSTM
     # olstm_predictor = trajnettools.lstm.OLSTMPredictor.load('output/olstm.pkl')
-    olstm_predictor = trajnettools.lstm.LSTMPredictor.load('output/vanilla_lstm.pkl')
+    olstm_predictor = trajnettools.lstm.LSTMPredictor.load('output/occupancy_lstm.pkl')
     olstm_predictions = paths.mapValues(olstm_predictor)
     paths_olstm = (paths
                    .mapValues(lambda paths: paths[0])
@@ -68,14 +68,16 @@ def eval(input_files):
 
 def main():
     datasets = [
-        'output/test/biwi_eth/*.txt',
-        'output/train/biwi_hotel/*.txt',
-        'output/test/crowds_zara01/*.txt',
-        'output/train/crowds_zara02/*.txt',
-        'output/test/crowds_uni_examples/*.txt',
+        'output/val/biwi_eth/*.txt',
+        'output/val/biwi_hotel/*.txt',
+        'output/val/crowds_zara01/*.txt',
+        'output/val/crowds_zara02/*.txt',
+        'output/val/crowds_uni_examples/*.txt',
 
-        # 'output/train/crowds_students001/*.txt',
-        # 'output/train/crowds_students003/*.txt',
+        'output/val/crowds_zara03/*.txt',
+        'output/val/crowds_students001/*.txt',
+        'output/val/crowds_students003/*.txt',
+        'output/val/mot_pets2009_s2l1/*.txt',
     ]
     results = {dataset
                .replace('output/', '')

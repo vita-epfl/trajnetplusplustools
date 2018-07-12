@@ -2,6 +2,10 @@ data/
 output/
 .DS_Store
 
+# profiling
+*.prof
+*_trace.json
+
 # Python
 venv*/
 *.egg-info
