@@ -25,23 +25,25 @@ class InputEmbedding(torch.nn.Module):
         if self.use_tags:
             return torch.cat([
                 self.input_embeddings(vel * self.scale),
-                torch.zeros(vel.size(0), 2),
+                torch.zeros(vel.size(0), 2, device=vel.device),
             ], dim=1)
         return self.input_embeddings(vel * self.scale)
 
-    def start_enc(self, batch_size=1):
+    def start_enc(self, vel):
+        """Create a start tag with an appropriate shape and device for vel."""
         if not self.use_tags:
             raise Exception('Input embedding does not support start tag')
 
-        v = torch.zeros(batch_size, self.embedding_dim)
+        v = torch.zeros(vel.size(0), self.embedding_dim, device=vel.device)
         v[:, -2] = 1
         return v
 
-    def start_dec(self, batch_size=1):
+    def start_dec(self, vel):
+        """Create a start tag with an appropriate shape and device for vel."""
         if not self.use_tags:
             raise Exception('Input embedding does not support start tag')
 
-        v = torch.zeros(batch_size, self.embedding_dim)
+        v = torch.zeros(vel.size(0), self.embedding_dim, device=vel.device)
         v[:, -1] = 1
         return v
 

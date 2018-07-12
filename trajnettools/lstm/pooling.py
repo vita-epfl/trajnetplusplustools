@@ -62,7 +62,7 @@ class Pooling(torch.nn.Module):
         """Returns the occupancy."""
         if xy[0] != xy[0] or \
            other_xy.size(0) == 0:
-            return torch.zeros(self.n * self.n * self.pooling_dim)
+            return torch.zeros(self.n * self.n * self.pooling_dim, device=xy.device)
 
         if other_values is None:
             other_values = torch.ones(other_xy.size(0), 1)
@@ -71,16 +71,17 @@ class Pooling(torch.nn.Module):
         oxy = other_xy[mask]
         other_values = other_values[mask]
         if not oxy.size(0):
-            return torch.zeros(self.n * self.n * self.pooling_dim)
+            return torch.zeros(self.n * self.n * self.pooling_dim, device=xy.device)
 
         oij = ((oxy - xy) / self.cell_side + self.n / 2)
         range_violations = torch.sum((oij < 0) + (oij >= self.n), dim=1)
         oij = oij[range_violations == 0, :].long()
         if oij.size(0) == 0:
-            return torch.zeros(self.n * self.n * self.pooling_dim)
+            return torch.zeros(self.n * self.n * self.pooling_dim, device=xy.device)
         oi = oij[:, 0] * self.n + oij[:, 1]
-        occ = torch.zeros(self.n * self.n, self.pooling_dim)
+        occ = torch.zeros(self.n * self.n, self.pooling_dim, device=xy.device)
         for oii, v in zip(oi, other_values):
+            print(occ.is_cuda, oii.is_cuda, v.is_cuda)
             occ[oii, :] += v
 
         return occ.view(-1)

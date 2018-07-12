@@ -13,7 +13,8 @@ from .pooling import Pooling
 
 
 class Trainer(object):
-    def __init__(self, model=None, criterion=None, optimizer=None, lr_scheduler=None):
+    def __init__(self, model=None, criterion=None, optimizer=None, lr_scheduler=None,
+                 device=None):
         self.model = model if model is not None else LSTM()
         self.criterion = criterion if criterion is not None else PredictionLoss()
         self.optimizer = optimizer if optimizer is not None else torch.optim.SGD(
@@ -21,6 +22,10 @@ class Trainer(object):
         self.lr_scheduler = (lr_scheduler
                              if lr_scheduler is not None
                              else torch.optim.lr_scheduler.StepLR(self.optimizer, 10))
+
+        self.device = device if device is not None else torch.device('cpu')
+        self.model = self.model.to(self.device)
+        self.criterion = self.criterion.to(self.device)
 
     def train(self, scenes, val_scenes, epochs=35):
         for epoch in range(1, epochs + 1):
@@ -37,7 +42,7 @@ class Trainer(object):
             for scene_i, scene in enumerate(scenes):
                 scene_start = time.time()
                 scene = augmentation.random_rotation(scene)
-                xy = scene_to_xy(scene)
+                xy = scene_to_xy(scene).to(self.device)
                 preprocess_time += time.time() - scene_start
 
                 optim_start = time.time()
@@ -127,15 +132,25 @@ def main(epochs=35):
                         help='glob expression for validation input files')
     parser.add_argument('-o', '--output', default=None,
                         help='output file')
+    parser.add_argument('--disable-cuda', action='store_true',
+                        help='disable CUDA')
     args = parser.parse_args()
 
+    # add args.device
+    args.device = torch.device('cpu')
+    if not args.disable_cuda and torch.cuda.is_available():
+        args.device = torch.device('cuda')
+
+    # configure pooling layer
     pool = None
     if args.type != 'vanilla':
         pool = Pooling(type_=args.type)
 
+    # set model output file
     if args.output is None:
         args.output = 'output/' + args.type + '_lstm.pkl'
 
+    # read in datasets
     sc = pysparkling.Context()
     scenes = (sc
               .wholeTextFiles(args.train_input_files)
@@ -150,7 +165,7 @@ def main(epochs=35):
 
     model = LSTM(pool=pool)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
-    trainer = Trainer(model, optimizer=optimizer)
+    trainer = Trainer(model, optimizer=optimizer, device=args.device)
     trainer.train(scenes, val_scenes, epochs=args.epochs)
     LSTMPredictor(trainer.model).save(args.output)
 

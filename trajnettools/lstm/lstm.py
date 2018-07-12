@@ -63,7 +63,7 @@ class LSTM(torch.nn.Module):
         # unmask
         hidden_cell_state[0][track_mask] = hidden_cell_masked[0]
         hidden_cell_state[1][track_mask] = hidden_cell_masked[1]
-        normal = torch.full((track_mask.size(0), 5), NAN)
+        normal = torch.full((track_mask.size(0), 5), NAN, device=track_mask.device)
         normal[track_mask] = normal_masked
 
         return hidden_cell_state, normal
@@ -85,13 +85,15 @@ class LSTM(torch.nn.Module):
 
         # initialize
         n_tracks = observed.size(1)
-        hidden_cell_state = (torch.zeros(n_tracks, self.hidden_dim),
-                             torch.zeros(n_tracks, self.hidden_dim))
+        hidden_cell_state = (
+            torch.zeros(n_tracks, self.hidden_dim, device=observed.device),
+            torch.zeros(n_tracks, self.hidden_dim, device=observed.device),
+        )
 
         # encoder
         normals = []  # predicted normal parameters for both phases
         positions = []  # true (during obs phase) and predicted positions
-        start_enc_tag = self.input_embedding.start_enc(n_tracks)
+        start_enc_tag = self.input_embedding.start_enc(observed[0])
         hidden_cell_state = self.encoder(start_enc_tag, hidden_cell_state)
         for obs1, obs2 in zip(observed[:-1], observed[1:]):
             hidden_cell_state, normal = self.step(self.encoder, hidden_cell_state, obs1, obs2)
@@ -111,7 +113,7 @@ class LSTM(torch.nn.Module):
         ))
 
         # decoder, predictions
-        start_dec_tag = self.input_embedding.start_dec(n_tracks)
+        start_dec_tag = self.input_embedding.start_dec(observed[0])
         hidden_cell_state = self.decoder(start_dec_tag, hidden_cell_state)
         for obs1, obs2 in zip(prediction_truth[:-1], prediction_truth[1:]):
             if obs1 is None:

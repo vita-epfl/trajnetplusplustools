@@ -11,6 +11,7 @@ setup(
     version=VERSION,
     packages=[
         'trajnettools',
+        'trajnettools.lstm',
     ],
     license='MIT',
     description='Trajnet tools.',
