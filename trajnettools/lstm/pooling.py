@@ -81,7 +81,6 @@ class Pooling(torch.nn.Module):
         oi = oij[:, 0] * self.n + oij[:, 1]
         occ = torch.zeros(self.n * self.n, self.pooling_dim, device=xy.device)
         for oii, v in zip(oi, other_values):
-            print(occ.is_cuda, oii.is_cuda, v.is_cuda)
             occ[oii, :] += v
 
         return occ.view(-1)

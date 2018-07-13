@@ -64,7 +64,7 @@ class Trainer(object):
             eval_start = time.time()
             self.model.train()  # so that it does not return positions but still normals
             for scene in val_scenes:
-                xy = scene_to_xy(scene)
+                xy = scene_to_xy(scene).to(self.device)
                 val_loss += self.val_batch(xy)
             eval_time = time.time() - eval_start
 
