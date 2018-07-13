@@ -92,15 +92,15 @@ def dataset_plots(input_files, output, n_theta=64, vr_max=2.5, vr_n=10):
 
 
 if __name__ == '__main__':
-    # train
+    # originally train
     dataset_plots('output/train/biwi_hotel/*.txt', 'output/biwi_hotel')
     dataset_plots('output/train/crowds_students001/*.txt', 'output/crowds_students001')
     dataset_plots('output/train/crowds_students003/*.txt', 'output/crowds_students003')
     dataset_plots('output/train/crowds_zara02/*.txt', 'output/crowds_zara02')
     dataset_plots('output/train/crowds_zara03/*.txt', 'output/crowds_zara03')
-    dataset_plots('output/train/mot_pets2009_s2l1/*.txt', 'output/mot_pets2009_s2l1')
+    # dataset_plots('output/train/mot_pets2009_s2l1/*.txt', 'output/mot_pets2009_s2l1')
 
-    # test
-    dataset_plots('output/test/biwi_eth/*.txt', 'output/biwi_eth')
-    dataset_plots('output/test/crowds_uni_examples/*.txt', 'output/crowds_uni_examples')
-    dataset_plots('output/test/crowds_zara01/*.txt', 'output/crowds_zara01')
+    # originally test
+    dataset_plots('output/train/biwi_eth/*.txt', 'output/biwi_eth')
+    dataset_plots('output/train/crowds_uni_examples/*.txt', 'output/crowds_uni_examples')
+    dataset_plots('output/train/crowds_zara01/*.txt', 'output/crowds_zara01')
