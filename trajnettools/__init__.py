@@ -6,3 +6,4 @@ from . import readers
 from . import writers
 
 from .data import Row
+from .dataset import load
