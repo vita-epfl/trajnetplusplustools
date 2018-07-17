@@ -1,5 +1,7 @@
 from collections import defaultdict
+import itertools
 import json
+import random
 
 from .data import SceneRow, TrackRow
 
@@ -45,8 +47,16 @@ class TrajnetReader(object):
                     row = SceneRow(scene['id'], scene['p'], scene['s'], scene['e'])
                     self.scenes_by_id[row.scene] = row
 
-    def scenes(self):
-        for scene_id in self.scenes_by_id:
+    def scenes(self, randomize=False, limit=0, ids=None):
+        scenes_by_id = self.scenes_by_id
+        if ids is not None:
+            scenes_by_id = ids
+        if randomize:
+            scenes_by_id = list(scenes_by_id)
+            random.shuffle(scenes_by_id)
+        if limit:
+            scenes_by_id = itertools.islice(scenes_by_id, limit)
+        for scene_id in scenes_by_id:
             yield self.scene(scene_id)
 
     def scene(self, scene_id):

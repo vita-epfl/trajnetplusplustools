@@ -30,4 +30,12 @@ Frame numbers are not recomputed. Rows are resampled to about
 2.5 rows per second.
 
 
+Tools
+=====
+
+* number of scenes per dataset: ``python -m trajnettools.dataset <dataset_files>``
+* summary plots per dataset: ``python -m trajnettools.summarize <dataset_files>``
+* plot trajectories in a scene: ``python -m trajnettools.trajectories <dataset_file>``
+
+
 .. _ndJSON: http://ndjson.org/
