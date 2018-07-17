@@ -1,9 +1,22 @@
+import argparse
 from contextlib import contextmanager
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-import pysparkling
 import trajnettools
+
+
+@contextmanager
+def show(fig_file=None, **kwargs):
+    fig, ax = plt.subplots(**kwargs)
+
+    yield ax
+
+    fig.set_tight_layout(True)
+    if fig_file:
+        fig.savefig(fig_file, dpi=300)
+    fig.show()
+    plt.close(fig)
 
 
 @contextmanager
@@ -21,7 +34,7 @@ def show2(fig_file=None, **kwargs):
     plt.close(fig)
 
 
-def theta_vr(path):
+def compute_theta_vr(path):
     row1, row2, row3, row4 = path[5], path[8], path[17], path[20]
     diff1 = np.array([row2.x - row1.x, row2.y - row1.y])
     diff2 = np.array([row4.x - row3.x, row4.y - row3.y])
@@ -34,15 +47,7 @@ def theta_vr(path):
     return theta2 - theta1, vr2
 
 
-def dataset_plots(input_files, output, n_theta=64, vr_max=2.5, vr_n=10):
-    sc = pysparkling.Context()
-    scenes = (sc
-              .wholeTextFiles(input_files)
-              .mapValues(trajnettools.readers.trajnet)
-              .mapValues(lambda paths: paths[0])
-              .mapValues(theta_vr)
-              .cache())
-
+def dataset_plots(input_file, n_theta=64, vr_max=2.5, vr_n=10):
     distr = np.zeros((n_theta, vr_n))
     def fill_grid(theta_vr):
         theta, vr = theta_vr
@@ -54,8 +59,6 @@ def dataset_plots(input_files, output, n_theta=64, vr_max=2.5, vr_n=10):
             vrp = distr.shape[1] - 1
         distr[thetap, vrp] += 1
 
-    scenes.values().foreach(fill_grid)
-
     unbinned_vr = [[] for _ in range(n_theta)]
     def fill_unbinned_vr(theta_vr):
         theta, vr = theta_vr
@@ -63,44 +66,49 @@ def dataset_plots(input_files, output, n_theta=64, vr_max=2.5, vr_n=10):
             return
         thetap = math.floor(theta * len(unbinned_vr) / (2*np.pi))
         unbinned_vr[thetap].append(vr)
-    scenes.values().foreach(fill_unbinned_vr)
-    median_vr = np.array([np.median(vrs) if len(vrs) > 5 else np.nan
-                          for vrs in unbinned_vr])
-    print(median_vr)
 
-    with show2(output + '_theta_speed.png', figsize=(8, 4)) as (ax1, ax2):
+    # run
+    for _, primary_ped, rows in trajnettools.load(input_file):
+        path = [r for r in rows if r.pedestrian == primary_ped]
+        t_vr = compute_theta_vr(path)
+        fill_grid(t_vr)
+        fill_unbinned_vr(t_vr)
+
+    with show(input_file + '_theta.png', figsize=(4, 4), subplot_kw={'polar': True}) as ax:
         r_edges = np.linspace(0, vr_max, distr.shape[1] + 1)
         theta_edges = np.linspace(0, 2*np.pi, distr.shape[0] + 1)
         thetas, rs = np.meshgrid(theta_edges, r_edges)
-        ax1.pcolormesh(thetas, rs, distr.T, cmap='Blues')
+        ax.pcolormesh(thetas, rs, distr.T, cmap='Blues')
 
+        median_vr = np.array([np.median(vrs) if len(vrs) > 5 else np.nan
+                              for vrs in unbinned_vr])
         center_thetas = np.linspace(0.0, 2*np.pi, len(median_vr) + 1)
         center_thetas = 0.5 * (center_thetas[:-1] + center_thetas[1:])
         # close loop
         center_thetas = np.hstack([center_thetas, center_thetas[0:1]])
         median_vr = np.hstack([median_vr, median_vr[0:1]])
         # plot median radial velocity
-        ax1.plot(center_thetas, median_vr, label='median $v_r$ [m/s]', color='orange')
+        ax.plot(center_thetas, median_vr, label='median $v_r$ [m/s]', color='orange')
 
-        ax1.grid(linestyle='dotted')
-        ax1.legend()
+        ax.grid(linestyle='dotted')
+        ax.legend()
 
-        # histogram of radial velocities
-        ax2.hist([vr for theta_bin in unbinned_vr for vr in theta_bin],
-                 bins=20, range=(0.0, vr_max))
-        ax2.set_xlabel('$v_r$ [m/s]')
+    # histogram of radial velocities
+    with show(input_file + '_speed.png', figsize=(4, 4)) as ax:
+        ax.hist([vr for theta_bin in unbinned_vr for vr in theta_bin],
+                bins=20, range=(0.0, vr_max))
+        ax.set_xlabel('$v_r$ [m/s]')
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('dataset_files', nargs='+',
+                        help='Trajnet dataset file(s).')
+    args = parser.parse_args()
+
+    for dataset_file in args.dataset_files:
+        dataset_plots(dataset_file)
 
 
 if __name__ == '__main__':
-    # originally train
-    dataset_plots('output/train/biwi_hotel/*.txt', 'output/biwi_hotel')
-    dataset_plots('output/train/crowds_students001/*.txt', 'output/crowds_students001')
-    dataset_plots('output/train/crowds_students003/*.txt', 'output/crowds_students003')
-    dataset_plots('output/train/crowds_zara02/*.txt', 'output/crowds_zara02')
-    dataset_plots('output/train/crowds_zara03/*.txt', 'output/crowds_zara03')
-    # dataset_plots('output/train/mot_pets2009_s2l1/*.txt', 'output/mot_pets2009_s2l1')
-
-    # originally test
-    dataset_plots('output/train/biwi_eth/*.txt', 'output/biwi_eth')
-    dataset_plots('output/train/crowds_uni_examples/*.txt', 'output/crowds_uni_examples')
-    dataset_plots('output/train/crowds_zara01/*.txt', 'output/crowds_zara01')
+    main()

@@ -17,5 +17,4 @@ def load(path, recursive=True):
     LOG.info('loading dataset from %s', path)
     filenames = glob.iglob(path, recursive=recursive)
     for filename in filenames:
-        with open(filename, 'r') as f:
-            yield readers.trajnet(f.read())
+        yield from readers.TrajnetReader(filename).scenes()

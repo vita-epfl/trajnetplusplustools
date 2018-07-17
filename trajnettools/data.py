@@ -1,4 +1,5 @@
 from collections import namedtuple
 
 
-Row = namedtuple('Row', ['frame', 'pedestrian', 'x', 'y'])
+TrackRow = namedtuple('Row', ['frame', 'pedestrian', 'x', 'y'])
+SceneRow = namedtuple('Row', ['scene', 'pedestrian', 'start', 'end'])

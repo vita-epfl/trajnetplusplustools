@@ -5,5 +5,5 @@ from . import metrics
 from . import readers
 from . import writers
 
-from .data import Row
+from .data import TrackRow, SceneRow
 from .dataset import load
