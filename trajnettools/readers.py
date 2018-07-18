@@ -24,7 +24,7 @@ def trajnet_(whole_file):
     return list(marked.values()) + list(others.values())
 
 
-class TrajnetReader(object):
+class Reader(object):
     def __init__(self, input_file):
         self.tracks_by_frame = defaultdict(list)
         self.scenes_by_id = dict()
@@ -47,7 +47,7 @@ class TrajnetReader(object):
                     row = SceneRow(scene['id'], scene['p'], scene['s'], scene['e'])
                     self.scenes_by_id[row.scene] = row
 
-    def scenes(self, randomize=False, limit=0, ids=None):
+    def scenes(self, randomize=False, limit=0, ids=None, as_paths=False):
         scenes_by_id = self.scenes_by_id
         if ids is not None:
             scenes_by_id = ids
@@ -57,9 +57,9 @@ class TrajnetReader(object):
         if limit:
             scenes_by_id = itertools.islice(scenes_by_id, limit)
         for scene_id in scenes_by_id:
-            yield self.scene(scene_id)
+            yield self.scene(scene_id, as_paths=as_paths)
 
-    def scene(self, scene_id):
+    def scene(self, scene_id, as_paths=False):
         scene = self.scenes_by_id.get(scene_id)
         if scene is None:
             raise Exception('scene with that id not found')
@@ -68,10 +68,15 @@ class TrajnetReader(object):
         track_rows = [r
                       for frame in frames
                       for r in self.tracks_by_frame.get(frame, [])]
+
+        if as_paths:
+            paths = defaultdict(list)
+            for row in track_rows:
+                paths[row.pedestrian].append(row)
+
+            # list of paths with the first path being the path of the primary pedestrian
+            primary_path = paths[scene.pedestrian]
+            other_paths = [path for ped_id, path in paths.items() if ped_id != scene.pedestrian]
+            return scene_id, [primary_path] + other_paths
+
         return scene_id, scene.pedestrian, track_rows
-
-
-def trajnet_tracks(whole_file):
-    for line in whole_file.splitlines():
-        line = json.loads(line)
-        yield TrackRow()

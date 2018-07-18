@@ -68,13 +68,13 @@ def dataset_plots(input_file, n_theta=64, vr_max=2.5, vr_n=10):
         unbinned_vr[thetap].append(vr)
 
     # run
-    for _, primary_ped, rows in trajnettools.load(input_file):
+    for _, primary_ped, rows in trajnettools.load_all(input_file):
         path = [r for r in rows if r.pedestrian == primary_ped]
         t_vr = compute_theta_vr(path)
         fill_grid(t_vr)
         fill_unbinned_vr(t_vr)
 
-    with show(input_file + '_theta.png', figsize=(4, 4), subplot_kw={'polar': True}) as ax:
+    with show(input_file + '.theta.png', figsize=(4, 4), subplot_kw={'polar': True}) as ax:
         r_edges = np.linspace(0, vr_max, distr.shape[1] + 1)
         theta_edges = np.linspace(0, 2*np.pi, distr.shape[0] + 1)
         thetas, rs = np.meshgrid(theta_edges, r_edges)
@@ -94,7 +94,7 @@ def dataset_plots(input_file, n_theta=64, vr_max=2.5, vr_n=10):
         ax.legend()
 
     # histogram of radial velocities
-    with show(input_file + '_speed.png', figsize=(4, 4)) as ax:
+    with show(input_file + '.speed.png', figsize=(4, 4)) as ax:
         ax.hist([vr for theta_bin in unbinned_vr for vr in theta_bin],
                 bins=20, range=(0.0, vr_max))
         ax.set_xlabel('$v_r$ [m/s]')

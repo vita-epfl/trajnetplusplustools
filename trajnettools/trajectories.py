@@ -2,9 +2,8 @@ import argparse
 from collections import defaultdict
 from contextlib import contextmanager
 import matplotlib.pyplot as plt
-import numpy as np
 
-from . import readers
+from .readers import Reader
 
 
 @contextmanager
@@ -20,20 +19,41 @@ def show(fig_file=None, **kwargs):
     plt.close(fig)
 
 
-def trajectories(primary_pedestrian, rows, output_file):
+def trajectories(primary_pedestrian, rows, output_file=None):
+    with show_rows(primary_pedestrian, rows, output_file) as ax:
+        pass
+
+
+@contextmanager
+def show_paths(paths, output_file=None):
+    primary_pedestrian = paths[0][0].pedestrian
+    rows = [row for path in paths for row in path]
+    with show_rows(primary_pedestrian, rows, output_file) as ax:
+        yield ax
+
+
+@contextmanager
+def show_rows(primary_pedestrian, rows, output_file=None):
     trajectories_by_id = defaultdict(list)
     for row in rows:
         trajectories_by_id[row.pedestrian].append(row)
 
     with show(output_file, figsize=(8, 8)) as ax:
+        ax.grid(linestyle='dotted')
+        ax.set_aspect(1.0, 'datalim')
+        ax.set_xlabel('x [m]')
+        ax.set_ylabel('y [m]')
+
+        yield ax
+
         # primary
         xs = [r.x for r in trajectories_by_id[primary_pedestrian]]
         ys = [r.y for r in trajectories_by_id[primary_pedestrian]]
+        # track
+        ax.plot(xs, ys, color='black', linestyle='solid', label='primary')
         # markers
         ax.plot(xs[0:1], ys[0:1], color='black', marker='x', label='start', linestyle='None')
         ax.plot(xs[-1:], ys[-1:], color='black', marker='o', label='end', linestyle='None')
-        # track
-        ax.plot(xs, ys, color='black', linestyle='solid', label='primary')
 
         # other tracks
         for ped_id, ped_rows in trajectories_by_id.items():
@@ -49,11 +69,7 @@ def trajectories(primary_pedestrian, rows, output_file):
             ax.plot(xs, ys, color='black', linestyle='dotted')
 
         # frame
-        ax.grid(linestyle='dotted')
         ax.legend()
-        ax.set_aspect(1.0)
-        ax.set_xlabel('x [m]')
-        ax.set_ylabel('y [m]')
 
 
 def main():
@@ -73,7 +89,7 @@ def main():
     if args.output is None:
         args.output = args.dataset_file
 
-    reader = readers.TrajnetReader(args.dataset_file)
+    reader = Reader(args.dataset_file)
     if args.id:
         scenes = reader.scenes(ids=args.id, randomize=args.random)
     elif args.n:
