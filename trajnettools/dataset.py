@@ -7,7 +7,7 @@ from . import Reader
 LOG = logging.getLogger(__name__)
 
 
-def load_all(path, recursive=True):
+def load_all(path, recursive=True, as_paths=False):
     """Parsed scenes at the given path returned as a generator.
 
     Each scene contains a list of `Row`s where the first pedestrian is the
@@ -18,7 +18,7 @@ def load_all(path, recursive=True):
     LOG.info('loading dataset from %s', path)
     filenames = glob.iglob(path, recursive=recursive)
     for filename in filenames:
-        yield from Reader(filename).scenes()
+        yield from Reader(filename).scenes(as_paths=as_paths)
 
 
 def main():
