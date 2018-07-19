@@ -47,16 +47,18 @@ class Reader(object):
                     row = SceneRow(scene['id'], scene['p'], scene['s'], scene['e'])
                     self.scenes_by_id[row.scene] = row
 
-    def scenes(self, randomize=False, limit=0, ids=None, as_paths=False):
-        scenes_by_id = self.scenes_by_id
+    def scenes(self, randomize=False, limit=0, ids=None, as_paths=False, sample=None):
+        scene_ids = self.scenes_by_id.keys()
         if ids is not None:
-            scenes_by_id = ids
+            scene_ids = ids
         if randomize:
-            scenes_by_id = list(scenes_by_id)
-            random.shuffle(scenes_by_id)
+            scene_ids = list(scene_ids)
+            random.shuffle(scene_ids)
         if limit:
-            scenes_by_id = itertools.islice(scenes_by_id, limit)
-        for scene_id in scenes_by_id:
+            scene_ids = itertools.islice(scene_ids, limit)
+        if sample is not None:
+            scene_ids = random.sample(scene_ids, int(len(scene_ids) * sample))
+        for scene_id in scene_ids:
             yield self.scene(scene_id, as_paths=as_paths)
 
     def scene(self, scene_id, as_paths=False):
