@@ -1,6 +1,10 @@
 from collections import defaultdict
 from contextlib import contextmanager
-import matplotlib.pyplot as plt
+
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
 
 
 @contextmanager
