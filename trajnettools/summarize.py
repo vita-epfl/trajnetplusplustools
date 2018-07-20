@@ -1,38 +1,9 @@
 import argparse
-from contextlib import contextmanager
 import math
-import matplotlib.pyplot as plt
 import numpy as np
 
 from . import load_all
-
-
-@contextmanager
-def show(fig_file=None, **kwargs):
-    fig, ax = plt.subplots(**kwargs)
-
-    yield ax
-
-    fig.set_tight_layout(True)
-    if fig_file:
-        fig.savefig(fig_file, dpi=300)
-    fig.show()
-    plt.close(fig)
-
-
-@contextmanager
-def show2(fig_file=None, **kwargs):
-    fig = plt.figure(**kwargs)
-    ax1 = fig.add_subplot(1, 2, 1, polar=True)
-    ax2 = fig.add_subplot(1, 2, 2)
-
-    yield ax1, ax2
-
-    fig.set_tight_layout(True)
-    if fig_file:
-        fig.savefig(fig_file, dpi=300)
-    fig.show()
-    plt.close(fig)
+from . import show
 
 
 def compute_theta_vr(path):
@@ -75,7 +46,7 @@ def dataset_plots(input_file, n_theta=64, vr_max=2.5, vr_n=10):
         fill_grid(t_vr)
         fill_unbinned_vr(t_vr)
 
-    with show(input_file + '.theta.png', figsize=(4, 4), subplot_kw={'polar': True}) as ax:
+    with show.canvas(input_file + '.theta.png', figsize=(4, 4), subplot_kw={'polar': True}) as ax:
         r_edges = np.linspace(0, vr_max, distr.shape[1] + 1)
         theta_edges = np.linspace(0, 2*np.pi, distr.shape[0] + 1)
         thetas, rs = np.meshgrid(theta_edges, r_edges)
@@ -95,7 +66,7 @@ def dataset_plots(input_file, n_theta=64, vr_max=2.5, vr_n=10):
         ax.legend()
 
     # histogram of radial velocities
-    with show(input_file + '.speed.png', figsize=(4, 4)) as ax:
+    with show.canvas(input_file + '.speed.png', figsize=(4, 4)) as ax:
         ax.hist([vr for theta_bin in unbinned_vr for vr in theta_bin],
                 bins=20, range=(0.0, vr_max))
         ax.set_xlabel('$v_r$ [m/s]')

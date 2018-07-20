@@ -1,14 +1,11 @@
 from collections import defaultdict
 from contextlib import contextmanager
 
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    plt = None
+import matplotlib.pyplot as plt
 
 
 @contextmanager
-def show(image_file=None, **kwargs):
+def canvas(image_file=None, **kwargs):
     """Generic matplotlib context."""
     fig, ax = plt.subplots(**kwargs)
 
@@ -22,22 +19,22 @@ def show(image_file=None, **kwargs):
 
 
 @contextmanager
-def show_paths(paths, output_file=None):
+def paths(input_paths, output_file=None):
     """Context to plot paths."""
-    primary_pedestrian = paths[0][0].pedestrian
-    rows = [row for path in paths for row in path]
-    with show_rows(primary_pedestrian, rows, output_file) as ax:
+    primary_pedestrian = input_paths[0][0].pedestrian
+    input_rows = [row for path in input_paths for row in path]
+    with rows(primary_pedestrian, input_rows, output_file) as ax:
         yield ax
 
 
 @contextmanager
-def show_rows(primary_pedestrian, rows, output_file=None):
+def rows(primary_pedestrian, input_rows, output_file=None):
     """Context to plot rows."""
     trajectories_by_id = defaultdict(list)
-    for row in rows:
+    for row in input_rows:
         trajectories_by_id[row.pedestrian].append(row)
 
-    with show(output_file, figsize=(8, 8)) as ax:
+    with canvas(output_file, figsize=(8, 8)) as ax:
         ax.grid(linestyle='dotted')
         ax.set_aspect(1.0, 'datalim')
         ax.set_xlabel('x [m]')

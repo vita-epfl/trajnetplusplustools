@@ -1,11 +1,11 @@
 import argparse
 
 from .readers import Reader
-from .show import show_rows
+from . import show
 
 
 def trajectories(primary_pedestrian, rows, output_file=None):
-    with show_rows(primary_pedestrian, rows, output_file):
+    with show.rows(primary_pedestrian, rows, output_file):
         pass
 
 
