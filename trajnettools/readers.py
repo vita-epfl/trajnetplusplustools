@@ -6,24 +6,6 @@ import random
 from .data import SceneRow, TrackRow
 
 
-def trajnet_(whole_file):
-    marked = defaultdict(list)
-    others = defaultdict(list)
-    for line in whole_file.split('\n'):
-        if not line:
-            continue
-        line = [e for e in line.split(' ') if e != '']
-        mark = bool(float(line[4]))
-        ped_id = int(float(line[1]))
-        row = TrackRow(int(float(line[0])), ped_id, float(line[2]), float(line[3]))
-        if mark:
-            marked[ped_id].append(row)
-        else:
-            others[ped_id].append(row)
-
-    return list(marked.values()) + list(others.values())
-
-
 class Reader(object):
     def __init__(self, input_file):
         self.tracks_by_frame = defaultdict(list)

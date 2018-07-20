@@ -2,17 +2,10 @@ import json
 from .data import SceneRow, TrackRow
 
 
-def trajnet_tracks_(row):
-    return '{r.frame:d} {r.pedestrian:d} {r.x:.2f} {r.y:.2f}'.format(r=row)
-
-
-def trajnet_scenes_(row):
-    return '{r.scene:d} {r.pedestrian:d} {r.start:d} {r.end:d}'.format(r=row)
-
-
 def trajnet_tracks(row):
-    return json.dumps(
-        {'track': {'f': row.frame, 'p': row.pedestrian, 'x': round(row.x, 2), 'y': round(row.y, 2)}})
+    x = round(row.x, 2)
+    y = round(row.y, 2)
+    return json.dumps({'track': {'f': row.frame, 'p': row.pedestrian, 'x': x, 'y': y}})
 
 
 def trajnet_scenes(row):
@@ -23,4 +16,7 @@ def trajnet_scenes(row):
 def trajnet(row):
     if isinstance(row, TrackRow):
         return trajnet_tracks(row)
-    return trajnet_scenes(row)
+    elif isinstance(row, SceneRow):
+        return trajnet_scenes(row)
+
+    raise Exception('unknown row type')

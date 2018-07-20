@@ -3,7 +3,8 @@ from contextlib import contextmanager
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-import trajnettools
+
+from . import load_all
 
 
 @contextmanager
@@ -68,7 +69,7 @@ def dataset_plots(input_file, n_theta=64, vr_max=2.5, vr_n=10):
         unbinned_vr[thetap].append(vr)
 
     # run
-    for _, primary_ped, rows in trajnettools.load_all(input_file):
+    for _, primary_ped, rows in load_all(input_file):
         path = [r for r in rows if r.pedestrian == primary_ped]
         t_vr = compute_theta_vr(path)
         fill_grid(t_vr)
@@ -105,6 +106,13 @@ def main():
     parser.add_argument('dataset_files', nargs='+',
                         help='Trajnet dataset file(s).')
     args = parser.parse_args()
+
+    print('{dataset:>60s} |     N'.format(dataset=''))
+    for dataset_file in args.dataset_files:
+        print('{dataset:>60s} | {N:>5}'.format(
+            dataset=dataset_file,
+            N=sum(1 for _ in load_all(dataset_file)),
+        ))
 
     for dataset_file in args.dataset_files:
         dataset_plots(dataset_file)

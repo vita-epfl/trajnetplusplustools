@@ -1,4 +1,3 @@
-import argparse
 import glob
 import logging
 
@@ -24,21 +23,3 @@ def load_all(path, recursive=True, as_paths=False, sample=None):
                 if k in filename:
                     sample_rate = v
         yield from Reader(filename).scenes(as_paths=as_paths, sample=sample_rate)
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('dataset_files', nargs='+',
-                        help='dataset file(s)')
-    args = parser.parse_args()
-
-    print('{dataset:>60s} |     N'.format(dataset=''))
-    for dataset_file in args.dataset_files:
-        print('{dataset:>60s} | {N:>5}'.format(
-            dataset=dataset_file,
-            N=sum(1 for _ in load_all(dataset_file)),
-        ))
-
-
-if __name__ == '__main__':
-    main()

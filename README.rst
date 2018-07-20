@@ -33,9 +33,18 @@ Frame numbers are not recomputed. Rows are resampled to about
 Tools
 =====
 
-* number of scenes per dataset: ``python -m trajnettools.dataset <dataset_files>``
-* summary plots per dataset: ``python -m trajnettools.summarize <dataset_files>``
+* summary table and plots: ``python -m trajnettools.summarize <dataset_files>``
 * plot trajectories in a scene: ``python -m trajnettools.trajectories <dataset_file>``
+
+
+Dev
+===
+
+.. code-block:: sh
+
+    pylint trajnettools
+    pytest
+    mypy trajnettools --disallow-untyped-defs
 
 
 .. _ndJSON: http://ndjson.org/
