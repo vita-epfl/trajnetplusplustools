@@ -34,10 +34,10 @@ def paths(input_paths, output_file=None):
         ys = [r.y for r in input_paths[0]]
         # track
         ax.plot(xs, ys, color='black', linestyle='solid', label='primary',
-                marker='o', markersize=2.5)
+                marker='o', markersize=2.5, zorder=1.9)
         # markers
-        ax.plot(xs[0:1], ys[0:1], color='black', marker='x', label='start', linestyle='None')
-        ax.plot(xs[-1:], ys[-1:], color='black', marker='o', label='end', linestyle='None')
+        ax.plot(xs[0:1], ys[0:1], color='black', marker='x', label='start', linestyle='None', zorder=0.9)
+        ax.plot(xs[-1:], ys[-1:], color='black', marker='o', label='end', linestyle='None', zorder=0.9)
 
         # other tracks
         for ped_rows in input_paths[1:]:
