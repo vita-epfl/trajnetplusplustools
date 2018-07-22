@@ -1,12 +1,7 @@
 import argparse
 
-from .readers import Reader
+from .reader import Reader
 from . import show
-
-
-def trajectories(primary_pedestrian, rows, output_file=None):
-    with show.rows(primary_pedestrian, rows, output_file):
-        pass
 
 
 def main():
@@ -26,7 +21,7 @@ def main():
     if args.output is None:
         args.output = args.dataset_file
 
-    reader = Reader(args.dataset_file)
+    reader = Reader(args.dataset_file, scene_type='paths')
     if args.id:
         scenes = reader.scenes(ids=args.id, randomize=args.random)
     elif args.n:
@@ -34,9 +29,10 @@ def main():
     else:
         scenes = reader.scenes(randomize=args.random)
 
-    for scene_id, primary_ped, rows in scenes:
+    for scene_id, paths in scenes:
         output = '{}.scene{}.png'.format(args.output, scene_id)
-        trajectories(primary_ped, rows, output)
+        with show.paths(paths, output):
+            pass
 
 
 if __name__ == '__main__':
