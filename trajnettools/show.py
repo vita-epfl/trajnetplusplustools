@@ -46,7 +46,8 @@ def rows(primary_pedestrian, input_rows, output_file=None):
         xs = [r.x for r in trajectories_by_id[primary_pedestrian]]
         ys = [r.y for r in trajectories_by_id[primary_pedestrian]]
         # track
-        ax.plot(xs, ys, color='black', linestyle='solid', label='primary')
+        ax.plot(xs, ys, color='black', linestyle='solid', label='primary',
+                marker='o', markersize=2.5)
         # markers
         ax.plot(xs[0:1], ys[0:1], color='black', marker='x', label='start', linestyle='None')
         ax.plot(xs[-1:], ys[-1:], color='black', marker='o', label='end', linestyle='None')
