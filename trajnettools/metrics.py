@@ -3,14 +3,13 @@ from __future__ import division
 import numpy as np
 
 
-def final_l2(path1_path2):
-    row1 = path1_path2[0][-1]
-    row2 = path1_path2[1][-1]
+def final_l2(path1, path2):
+    row1 = path1[-1]
+    row2 = path2[-1]
     return np.linalg.norm((row2.x - row1.x, row2.y - row1.y))
 
 
-def average_l2(path1_path2, n_predictions=11):
-    path1, path2 = path1_path2
+def average_l2(path1, path2, n_predictions=12):
     assert len(path1) >= n_predictions
     assert len(path2) >= n_predictions
     path1 = path1[-n_predictions:]

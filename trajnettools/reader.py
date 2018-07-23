@@ -14,6 +14,8 @@ class Reader(object):
     :param scene_type: None -> numpy.array, 'rows' -> TrackRow and SceneRow, 'paths': grouped rows (primary pedestrian first)
     """
     def __init__(self, input_file, scene_type=None):
+        if scene_type is not None and scene_type not in {'rows', 'paths'}:
+            raise Exception('scene_type not supported')
         self.scene_type = scene_type
 
         self.tracks_by_frame = defaultdict(list)
