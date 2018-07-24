@@ -50,58 +50,51 @@ Dataset Summaries
 
 biwi_hotel:
 
-+----------------------------------------------------+-----------------------------------------------------+
-| .. image:: docs/train/biwi_hotel.ndjson.theta.png  +  .. image:: docs/train/biwi_hotel.ndjson.speed.png  +
-+----------------------------------------------------+-----------------------------------------------------+
++----------------------------------------------------+----------------------------------------------------+
+| .. image:: docs/train/biwi_hotel.ndjson.theta.png  | .. image:: docs/train/biwi_hotel.ndjson.speed.png  |
++----------------------------------------------------+----------------------------------------------------+
 
 crowds_students001:
 
-.. image:: docs/train/crowds_students001.ndjson.theta.png
-    :height: 200
-.. image:: docs/train/crowds_students001.ndjson.speed.png
-    :height: 200
++-----------------------------------------------------------+-----------------------------------------------------------+
+| .. image:: docs/train/crowds_students001.ndjson.theta.png | .. image:: docs/train/crowds_students001.ndjson.speed.png |
++-----------------------------------------------------------+-----------------------------------------------------------+
 
 crowds_students003:
 
-.. image:: docs/train/crowds_students003.ndjson.theta.png
-    :height: 200
-.. image:: docs/train/crowds_students003.ndjson.speed.png
-    :height: 200
++-----------------------------------------------------------+-----------------------------------------------------------+
+| .. image:: docs/train/crowds_students003.ndjson.theta.png | .. image:: docs/train/crowds_students003.ndjson.speed.png |
++-----------------------------------------------------------+-----------------------------------------------------------+
 
 crowds_zara02:
 
-.. image:: docs/train/crowds_zara02.ndjson.theta.png
-    :height: 200
-.. image:: docs/train/crowds_zara02.ndjson.speed.png
-    :height: 200
++-----------------------------------------------------------+-----------------------------------------------------------+
+| .. image:: docs/train/crowds_zara02.ndjson.theta.png      | .. image:: docs/train/crowds_zara02.ndjson.speed.png      |
++-----------------------------------------------------------+-----------------------------------------------------------+
 
 crowds_zara03:
 
-.. image:: docs/train/crowds_zara03.ndjson.theta.png
-    :height: 200
-.. image:: docs/train/crowds_zara03.ndjson.speed.png
-    :height: 200
++-----------------------------------------------------------+-----------------------------------------------------------+
+| .. image:: docs/train/crowds_zara03.ndjson.theta.png      | .. image:: docs/train/crowds_zara03.ndjson.speed.png      |
++-----------------------------------------------------------+-----------------------------------------------------------+
 
 dukemtmc:
 
-.. image:: docs/train/dukemtmc.ndjson.theta.png
-    :height: 200
-.. image:: docs/train/dukemtmc.ndjson.speed.png
-    :height: 200
++-----------------------------------------------------------+-----------------------------------------------------------+
+| .. image:: docs/train/dukemtmc.ndjson.theta.png           | .. image:: docs/train/dukemtmc.ndjson.speed.png           |
++-----------------------------------------------------------+-----------------------------------------------------------+
 
 syi:
 
-.. image:: docs/train/syi.ndjson.theta.png
-    :height: 200
-.. image:: docs/train/syi.ndjson.speed.png
-    :height: 200
++-----------------------------------------------------------+-----------------------------------------------------------+
+| .. image:: docs/train/syi.ndjson.theta.png                | .. image:: docs/train/syi.ndjson.speed.png                |
++-----------------------------------------------------------+-----------------------------------------------------------+
 
 wildtrack:
 
-.. image:: docs/train/wildtrack.ndjson.theta.png
-    :height: 200
-.. image:: docs/train/wildtrack.ndjson.speed.png
-    :height: 200
++-----------------------------------------------------------+-----------------------------------------------------------+
+| .. image:: docs/train/wildtrack.ndjson.theta.png          | .. image:: docs/train/wildtrack.ndjson.speed.png          |
++-----------------------------------------------------------+-----------------------------------------------------------+
 
 
 .. _ndJSON: http://ndjson.org/
