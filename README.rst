@@ -20,11 +20,9 @@ with:
 
 * ``id``: scene id
 * ``p``: pedestrian id
-* ``s``: start frame id
-* ``e``: end frame id
+* ``s``, ``e``: start and end frame id
 * ``f``: frame id
-* ``x``: x-coordinate in meters
-* ``y``: y-coordinate in meters
+* ``x``, ``y``: x- and y-coordinate in meters
 
 Frame numbers are not recomputed. Rows are resampled to about
 2.5 rows per second.
