@@ -48,28 +48,11 @@ Dev
 Dataset Summaries
 =================
 
-
-+--------------------------+-------------------------+
-|  |theta image|           +  |speed image|          +
-+--------------------------+-------------------------+
-
-.. |theta image| image:: docs/train/biwi_hotel.ndjson.theta.png
-    :alt: Documentation.
-    :height: 230
-    :target: http://databench.trivial.io
-
-.. |speed image| image:: docs/train/biwi_hotel.ndjson.speed.png
-    :alt: Analysis example screenshot.
-    :height: 230
-    :target: http://databench-examples.trivial.io
-
-
 biwi_hotel:
 
-.. image:: docs/train/biwi_hotel.ndjson.theta.png
-    :height: 200
-.. image:: docs/train/biwi_hotel.ndjson.speed.png
-    :height: 200
++----------------------------------------------------+-----------------------------------------------------+
+| .. image:: docs/train/biwi_hotel.ndjson.theta.png  +  .. image:: docs/train/biwi_hotel.ndjson.speed.png  +
++----------------------------------------------------+-----------------------------------------------------+
 
 crowds_students001:
 
