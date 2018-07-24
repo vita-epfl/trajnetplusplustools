@@ -53,12 +53,12 @@ Dataset Summaries
 |  |theta image|           +  |speed image|          +
 +--------------------------+-------------------------+
 
-.. |theta image| image:: https://raw.githubusercontent.com/svenkreiss/databench/master/docs/images/Python-docs.png
+.. |theta image| image:: docs/train/biwi_hotel.ndjson.theta.png
     :alt: Documentation.
     :height: 230
     :target: http://databench.trivial.io
 
-.. |speed image| image:: https://raw.githubusercontent.com/svenkreiss/databench/master/docs/images/bagofcharsd3.png
+.. |speed image| image:: docs/train/biwi_hotel.ndjson.speed.png
     :alt: Analysis example screenshot.
     :height: 230
     :target: http://databench-examples.trivial.io
