@@ -1,3 +1,19 @@
+Tools
+=====
+
+* summary table and plots: ``python -m trajnettools.summarize <dataset_files>``
+* plot trajectories in a scene: ``python -m trajnettools.trajectories <dataset_file>``
+
+
+APIs
+====
+
+* ``trajnettools.Reader``: class to read the dataset_file
+* ``trajnettools.show``: module containing contexts for visualizing ``rows`` and ``paths``
+* ``trajnettools.writers``: write a trajnet dataset file
+* ``trajnettools.metrics``: contains ``average_l2()`` and ``final_l2()`` functions
+
+
 Dataset
 =======
 
@@ -26,13 +42,6 @@ with:
 
 Frame numbers are not recomputed. Rows are resampled to about
 2.5 rows per second.
-
-
-Tools
-=====
-
-* summary table and plots: ``python -m trajnettools.summarize <dataset_files>``
-* plot trajectories in a scene: ``python -m trajnettools.trajectories <dataset_file>``
 
 
 Dev
