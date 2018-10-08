@@ -13,3 +13,6 @@ __pycache__
 .pytest_cache/
 dist/
 .mypy_cache
+
+.cache
+.idea
