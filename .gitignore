@@ -12,6 +12,7 @@ venv*/
 __pycache__
 .pytest_cache/
 dist/
+build/
 .mypy_cache
 
 .cache
