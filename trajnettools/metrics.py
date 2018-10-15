@@ -19,11 +19,10 @@ def average_l2(path1, path2, n_predictions=12):
                for r1, r2 in zip(path1, path2)) / n_predictions
 
 
-def collision(path1, path2, n_predictions=12,person_radius=0.2):
+def collision(path1, path2, n_predictions=12, person_radius=0.3):
     """Check if there is collision or not"""
 
     assert len(path1) >= n_predictions
-    assert len(path2) >= n_predictions
     path1 = path1[-n_predictions:]
     path2 = path2[-n_predictions:]
 

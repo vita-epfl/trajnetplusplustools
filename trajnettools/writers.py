@@ -10,7 +10,7 @@ def trajnet_tracks(row):
 
 def trajnet_scenes(row):
     return json.dumps(
-        {'scene': {'id': row.scene, 'p': row.pedestrian, 's': row.start, 'e': row.end}})
+        {'scene': {'id': row.scene, 'p': row.pedestrian, 's': row.start, 'e': row.end, 'fps': row.fps}})
 
 
 def trajnet(row):

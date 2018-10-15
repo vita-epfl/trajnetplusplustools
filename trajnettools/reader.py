@@ -36,7 +36,7 @@ class Reader(object):
 
                 scene = line.get('scene')
                 if scene is not None:
-                    row = SceneRow(scene['id'], scene['p'], scene['s'], scene['e'])
+                    row = SceneRow(scene['id'], scene['p'], scene['s'], scene['e'], scene['fps'])
                     self.scenes_by_id[row.scene] = row
 
     def scenes(self, randomize=False, limit=0, ids=None, sample=None):
