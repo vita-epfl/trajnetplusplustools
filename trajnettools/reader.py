@@ -55,18 +55,26 @@ class Reader(object):
 
     @staticmethod
     def track_rows_to_paths(primary_pedestrian, track_rows):
-        paths = defaultdict(list)
+        primary_path = []
+        other_paths = defaultdict(list)
         for row in track_rows:
-            paths[row.pedestrian].append(row)
-        # list of paths with the first path being the path of the primary pedestrian
-        primary_path = paths[primary_pedestrian]
-        other_paths = [path for ped_id, path in paths.items() if ped_id != primary_pedestrian]
-        return [primary_path] + other_paths
+            if row.pedestrian == primary_pedestrian:
+                primary_path.append(row)
+                continue
+            other_paths[row.pedestrian].append(row)
+
+        return [primary_path] + list(other_paths.values())
 
     @staticmethod
     def paths_to_xy(paths):
-        frames = [r.frame for r in paths[0]]
-        pedestrians = [path[0].pedestrian for path in paths]
+        """Convert paths to numpy array with nan as blanks."""
+        frames = set(r.frame for r in paths[0])
+        pedestrians = set(row.pedestrian
+                          for path in paths
+                          for row in path if row.frame in frames)
+        paths = [path for path in paths if path[0].pedestrian in pedestrians]
+        frames = sorted(frames)
+        pedestrians = list(pedestrians)
 
         frame_to_index = {frame: i for i, frame in enumerate(frames)}
         xy = np.full((len(frames), len(pedestrians), 2), np.nan)
