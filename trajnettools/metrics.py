@@ -1,5 +1,4 @@
 from __future__ import division
-import time
 import numpy as np
 
 
@@ -23,7 +22,7 @@ def collision(path1, path2, n_predictions=12, person_radius=0.1):
     """Check if there is collision or not"""
 
     assert len(path1) >= n_predictions
-
+    path1 = path1[-n_predictions:]
     common_frames1, common_frames2 = np.where(np.array(list(r1.frame == r2.frame for r1 in path1 for r2 in path2))
                                               .reshape(len(path1), len(path2)) > 0)
 
