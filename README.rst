@@ -30,7 +30,7 @@ Track:
 
 .. code-block:: json
 
-    {"track": {"f": 10238, "p": 248, "x": 13.2, "y": 5.85}}
+    {"track": {"f": 10238, "p": 248, "x": 13.2, "y": 5.85, "pred_number": 0}}
 
 with:
 
@@ -39,6 +39,7 @@ with:
 * ``s``, ``e``: start and end frame id
 * ``f``: frame id
 * ``x``, ``y``: x- and y-coordinate in meters
+* ``pred_number``: prediction number for nearest neighbor search
 
 Frame numbers are not recomputed. Rows are resampled to about
 2.5 rows per second.
