@@ -30,7 +30,10 @@ class Reader(object):
 
                 track = line.get('track')
                 if track is not None:
-                    row = TrackRow(track['f'], track['p'], track['x'], track['y'], track['pred_nb'])
+                    if 'prediction_number' not in list(track.keys()):
+                        row = TrackRow(track['f'], track['p'], track['x'], track['y'])
+                    else:
+                        row = TrackRow(track['f'], track['p'], track['x'], track['y'], track['prediction_number'])
                     self.tracks_by_frame[row.frame].append(row)
                     continue
 

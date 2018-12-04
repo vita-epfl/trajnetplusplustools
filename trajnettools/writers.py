@@ -5,7 +5,11 @@ from .data import SceneRow, TrackRow
 def trajnet_tracks(row):
     x = round(row.x, 2)
     y = round(row.y, 2)
-    return json.dumps({'track': {'f': row.frame, 'p': row.pedestrian, 'x': x, 'y': y, 'pred_nb': row.pred_number}})
+    if row.prediction_number is None:
+        return json.dumps({'track': {'f': row.frame, 'p': row.pedestrian, 'x': x, 'y': y}})
+    else:
+        return json.dumps({'track': {'f': row.frame, 'p': row.pedestrian, 'x': x, 'y': y,
+                                     'pred_nb': row.prediction_number}})
 
 
 def trajnet_scenes(row):
