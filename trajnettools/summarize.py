@@ -2,14 +2,14 @@ import argparse
 import math
 import numpy as np
 
-from . import load_all
-from . import show
+from trajnettools.dataset import load_all
+from trajnettools import show
 
 
 def compute_theta_vr(path):
     row1, row2, row3, row4 = path[5], path[8], path[17], path[20]
-    diff1 = np.array([row2.x - row1.x, row2.y - row1.y])
-    diff2 = np.array([row4.x - row3.x, row4.y - row3.y])
+    diff1 = np.array([row2[0] - row1[0], row2[1] - row1[1]])
+    diff2 = np.array([row4[0] - row3[0], row4[1] - row3[1]])
     theta1 = np.arctan2(diff1[1], diff1[0])
     theta2 = np.arctan2(diff2[1], diff2[0])
     vr1 = np.linalg.norm(diff1) / (3 * 0.4)
@@ -40,8 +40,9 @@ def dataset_plots(input_file, n_theta=64, vr_max=2.5, vr_n=10):
         unbinned_vr[thetap].append(vr)
 
     # run
-    for _, primary_ped, rows in load_all(input_file):
-        path = [r for r in rows if r.pedestrian == primary_ped]
+    for primary_ped, rows in load_all(input_file):
+        # path = [r for r in rows if r.pedestrian == primary_ped]
+        path = rows[:, 0]
         t_vr = compute_theta_vr(path)
         fill_grid(t_vr)
         fill_unbinned_vr(t_vr)
