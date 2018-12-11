@@ -24,19 +24,21 @@ Scene:
 
 .. code-block:: json
 
-    {"scene": {"id": 266, "p": 254, "s": 10238, "e": 10358}}
+    {"scene": {"id": 266, "p": 254, "s": 10238, "e": 10358, "fps": 2.5, "tag": 2}}
 
 Track:
 
 .. code-block:: json
 
-    {"track": {"f": 10238, "p": 248, "x": 13.2, "y": 5.85, "pred_number": 0}}
+    {"track": {"f": 10238, "p": 248, "x": 13.2, "y": 5.85}}
 
 with:
 
 * ``id``: scene id
 * ``p``: pedestrian id
 * ``s``, ``e``: start and end frame id
+* ``fps``: frame rate
+* ``tag``: trajectory type
 * ``f``: frame id
 * ``x``, ``y``: x- and y-coordinate in meters
 * ``pred_number``: prediction number for nearest neighbor search
