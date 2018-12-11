@@ -2,8 +2,8 @@ import argparse
 import math
 import numpy as np
 
-from trajnettools.dataset import load_all
-from trajnettools import show
+from . import load_all
+from . import show
 
 
 def compute_theta_vr(path):
