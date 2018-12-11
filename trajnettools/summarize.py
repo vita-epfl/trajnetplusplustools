@@ -41,7 +41,6 @@ def dataset_plots(input_file, n_theta=64, vr_max=2.5, vr_n=10):
 
     # run
     for primary_ped, rows in load_all(input_file):
-        # path = [r for r in rows if r.pedestrian == primary_ped]
         path = rows[:, 0]
         t_vr = compute_theta_vr(path)
         fill_grid(t_vr)

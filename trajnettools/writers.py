@@ -9,7 +9,7 @@ def trajnet_tracks(row):
         return json.dumps({'track': {'f': row.frame, 'p': row.pedestrian, 'x': x, 'y': y}})
     else:
         return json.dumps({'track': {'f': row.frame, 'p': row.pedestrian, 'x': x, 'y': y,
-                                     'pred_nb': row.prediction_number}})
+                                     'prediction_number': row.prediction_number}})
 
 
 def trajnet_scenes(row):
