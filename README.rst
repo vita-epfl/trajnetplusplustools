@@ -41,7 +41,7 @@ with:
 * ``tag``: trajectory type
 * ``f``: frame id
 * ``x``, ``y``: x- and y-coordinate in meters
-* ``pred_number``: prediction number for nearest neighbor search
+* ``pred_number``: (optional) prediction number for "nearest neighbor search"
 
 Frame numbers are not recomputed. Rows are resampled to about
 2.5 rows per second.
