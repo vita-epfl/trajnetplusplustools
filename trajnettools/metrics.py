@@ -23,7 +23,7 @@ def collision(path1, path2, n_predictions=12, person_radius=0.1):
 
     assert len(path1) >= n_predictions
     path1 = path1[-n_predictions:]
-    frames1 = set([f1.frame for f1 in path1])
+    frames1 = set(f1.frame for f1 in path1)
     frames2 = set(f2.frame for f2 in path2)
     common_frames = frames1.intersection(frames2)
 
