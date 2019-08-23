@@ -7,137 +7,27 @@ from . import show
 from .interactions import *
 import matplotlib.pyplot as plt
 
-T_OBS, T_SEQ, T_INT, T_STR = 9, 21, 9,  
-
-def theta_rotation(xy, theta):
-    # rotates scene by theta
-    
-    ct = math.cos(theta)
-    st = math.sin(theta)
-
-    r = np.array([[ct, st], [-st, ct]])
-    return np.einsum('ptc,ci->pti', xy, r)
-
-
-def center_scene(path, neigh_path, time_param=(9, 21, 9, 3)):
-    ## Centre scene
-
-    T_OBS, T_SEQ, T_INT, T_STR = time_param 
-    center = path[T_INT, :]
-    path = path - center
-    neigh_path = neigh_path - center
-
-    k = T_INT - T_STR
-    while sum(path[k, :]==0)==2 and k > 0:
-        k -= 1
-
-    if k > 0:
-        thet = np.pi + np.arccos((path[k, 1])/(np.linalg.norm([0, -1])*np.linalg.norm(path[k, :])))
-        if path[k, 0] < 0:
-            thet = -thet
-        norm_path = theta_rotation(path[:, np.newaxis, :], thet)
-        norm_neigh_path = theta_rotation(neigh_path, thet)
-        return norm_path[:, 0], norm_neigh_path
-    else:
-        return path, neigh_path
-
-
-def multimodality_plot(input_file, pos_angle=4, pos_range=15, vel_angle=4, vel_range=15, dist_thresh=5, n_theta=15, vr_max=2.5, vr_n=10):
-	## Multimodality of interactions
-    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-
-    heatmap = False
-
-    # run
-    i = 0
-    x_values = []
-    y_values = []
+def scene_plots(input_file, args):
+    n_int = 0
     for primary_ped, rows in load_all(input_file):
         path = rows[:, 0]
         neigh_path = rows[:, 1:]
-        interaction_matrix = get_interaction_matrix(rows, pos_angle, pos_range, vel_angle, vel_range, dist_thresh, choice='bothpos', output='matrix')
-    
+        interaction_matrix = get_interaction_matrix(rows, args, output='matrix')
         interaction_index = np.any(interaction_matrix, axis=0)
+        neigh = neigh_path[:,interaction_index]
 
-        ## Overall Plot
-        # if np.sum(interaction_index) > 0 and np.sum(interaction_index) < 2:
-        #     # print(np.sum(interaction_index))
-        #     i += 1
-        #     neigh = neigh_path[:,interaction_index]
-        #     path, neigh = center_scene(path, neigh)
-        #     # ax.plot(path[:9, 0], path[:9, 1])
-        #     ax.plot(path[T_OBS:, 0], path[T_OBS:, 1])
-        #     # ax.plot(neigh[T_OBS:, 0, 0], neigh[T_OBS:, 0, 1])
-        #     ## PP
-        #     x_values = np.concatenate((x_values, path[T_OBS:, 0]))
-        #     y_values = np.concatenate((y_values, path[T_OBS:, 1]))
-        #     ## Neighbours 
-        #     # x_values = np.concatenate((x_values, neigh[T_OBS:, 0, 0]))
-        #     # y_values = np.concatenate((y_values, neigh[T_OBS:, 0, 1]))
-        #     # ax.plot(path[0, 0], path[0, 1], color='g', marker='o', label = 'start point')
-        #     # ax.plot(path[-1, 0], path[-1, 1], color='r', marker='x', label = 'end point')
-        #     # ax.plot(neigh[:, 0, 0], neigh[:, 0, 1])
-        #     # ax.plot(neigh[0, 0, 0], neigh[0, 0, 1], color='g', marker='o', label = 'start point')
-        #     # ax.plot(neigh[-1, 0, 0], neigh[-1, 0, 1], color='r', marker='x', label = 'end point')
-        #     ax.set_xlim([-6, 6])
-        #     ax.set_ylim([-6, 6])
+        ## n Examples of interactions ##
+        if (np.sum(interaction_index) == 1) & (np.linalg.norm(path[-1] - path[0]) > 5.0):
+            n_int += 1
+            if (n_int < args.n):
+                with show.interaction_path(path, neigh):
+                    pass
 
-        ## 5 Examples of interactions ##
-        if (np.sum(interaction_index) == 1) & (np.linalg.norm(path[-1] - path[0]) > 1.0):
-            i += 1
-            if i < 25:
-                neigh = neigh_path[:,interaction_index]
-                path, neigh = center_scene(path, neigh)
-                ax.plot(path[:, 0], path[:, 1])
-                # ax.plot(path[:T_OBS, 0], path[:T_OBS, 1])
-                # ax.plot(path[T_OBS:, 0], path[T_OBS:, 1])
-                ax.plot(neigh[:, 0, 0], neigh[:, 0, 1])
-                ## PP
-                # x_values = np.concatenate((x_values, path[T_OBS:, 0]))
-                # y_values = np.concatenate((y_values, path[T_OBS:, 1]))
-                ## Neighbours 
-                # x_values = np.concatenate((x_values, neigh[T_OBS:, 0, 0]))
-                # y_values = np.concatenate((y_values, neigh[T_OBS:, 0, 1]))
-                # ax.plot(path[0, 0], path[0, 1], color='g', marker='o', label = 'start point')
-                ax.plot(path[-1, 0], path[-1, 1], color='r', marker='x', label = 'end point')
-                # ax.plot(neigh[:, 0, 0], neigh[:, 0, 1])
-                # ax.plot(neigh[0, 0, 0], neigh[0, 0, 1], color='g', marker='o', label = 'start point')
-                ax.plot(neigh[-1, 0, 0], neigh[-1, 0, 1], color='r', marker='x', label = 'end point')
-                ax.set_xlim([-10, 10])
-                ax.set_ylim([-10, 10])
-                fig.show()
-                ax.clear()
-
-    print("Number of Instances: ", i) 
-
-    if heatmap:
-	    ax.clear()
-	    heatmap, xedges, yedges = np.histogram2d(y_values, x_values, bins=[50, 50], range=[[-3,3],[-3,3]])
-	    thres = 10
-	    heatmap[np.where(heatmap >= thres)] = thres
-	    plt.imshow(heatmap, interpolation='none', origin='lower')
-	    plt.colorbar()
-
-    fig.show()
-    plt.close(fig)
+    print("Number of Instances: ", n_int) 
 
 
-def dataset_plots(input_file, pos_angle=4, pos_range=15, vel_angle=4, vel_range=15, dist_thresh=5, n_theta=360, vr_max=2.5, vr_n=10, choice='pos'):
+def distribution_plots(input_file, args):
 	## Distributions of interactions
-	## choice : Choice of angle to be thresholded 
-			# 'pos': Angle between Velocity of PP and Line Joining PP to N
-			# 'vel': Angle between Velocity of PP and Velocity of N 
-			# 'pos_vel': Both pos and vel 
-
-    ## choice: 'pos'
-    ## The radial plot shows the interaction map on ground plane. Viz 1
-    ## The mean plot shows the distance as a function of angle. Viz 2
-
-
-    ## choice: 'vel'
-    ## The radial plot shows the interaction map. Viz 1
-    ## The mean plot shows the distance as a function of relative velocity. Viz 4
-    
     distr = np.zeros((n_theta, vr_n))
     def fill_grid(theta_vr):
         theta, vr, sign = theta_vr
@@ -155,12 +45,12 @@ def dataset_plots(input_file, pos_angle=4, pos_range=15, vel_angle=4, vel_range=
         thetap = np.floor(theta * len(unbinned_vr) / (2*np.pi)).astype(int)
         for th in range(len(thetap)):
             unbinned_vr[thetap[th]].append(vr[th])
-
     vr_max = dist_thresh
-    i = 0
+
+    #run
     for primary_ped, rows in load_all(input_file):
         interaction_matrix, chosen_true, sign_true, dist_true = \
-        get_interaction_matrix(rows, pos_angle, pos_range, vel_angle, vel_range, dist_thresh, choice)
+        get_interaction_matrix(rows, args)
 
         fill_grid((chosen_true, dist_true, sign_true))
         fill_unbinned_vr((chosen_true, dist_true, sign_true))      
@@ -184,56 +74,50 @@ def dataset_plots(input_file, pos_angle=4, pos_range=15, vel_angle=4, vel_range=
         ax.grid(linestyle='dotted')
         ax.legend()    
 
-def group_plots(input_file, dist_thresh=0.8, std_thresh=0.1):
+def group_plots(input_file, args, dist_thresh=0.8, std_thresh=0.1):
     ## Identify and Visualize Groups
     ## dist_thresh: Distance threshold to be withinin a group
     ## std_thresh: Std deviation threshold for variation of distance
     
-    i = 0
-    j = 0
+    n_groups = 0
+    n_statn_groups = 0
     fig, ax = plt.subplots(1, 1, figsize=(6, 6))
     for primary_ped, rows in load_all(input_file):
-        path, group, flag = check_group(rows, dist_thresh, std_thresh)
-        # print("Group Shape", group.shape, group.shape[1])
-        
+        path, group, flag = check_group(rows, dist_thresh, std_thresh)        
         if flag:
-            i += 1
+            n_groups += 1
             if np.linalg.norm(path[-1] - path[0]) < 1.0:
-                j += 1
-            if i < 15:
-                # path, neigh = center_scene(path, neigh)
-                # ax.plot(path[:T_OBS, 0], path[:T_OBS, 1])
-                ax.plot(path[T_OBS:, 0], path[T_OBS:, 1])
-                for j in range(group.shape[1]):
-                    ax.plot(group[T_OBS:, j, 0], group[T_OBS:, j, 1])
+                n_statn_groups += 1
+            if n_groups < args.n:
+                with show.group_path(path, group):
+                    pass
 
-                ## PP
-                # x_values = np.concatenate((x_values, path[T_OBS:, 0]))
-                # y_values = np.concatenate((y_values, path[T_OBS:, 1]))
-
-                ## Neighbours 
-                # x_values = np.concatenate((x_values, neigh[T_OBS:, 0, 0]))
-                # y_values = np.concatenate((y_values, neigh[T_OBS:, 0, 1]))
-
-                # ax.plot(path[0, 0], path[0, 1], color='g', marker='o', label = 'start point')
-                ax.plot(path[-1, 0], path[-1, 1], color='r', marker='x', label = 'end point')
-
-                # ax.plot(neigh[:, 0, 0], neigh[:, 0, 1])
-                # ax.plot(neigh[0, 0, 0], neigh[0, 0, 1], color='g', marker='o', label = 'start point')
-                ax.plot(group[-1, 0, 0], group[-1, 0, 1], color='r', marker='x', label = 'end point')
-                # ax.set_xlim([-10, 10])
-                # ax.set_ylim([-10, 10])
-                plt.axis('equal')
-                fig.show()
-                ax.clear()
-    print("Number of Groups: ", i)
-    print("Number of Stationary Groups: ", j)
+    print("Number of Groups: ", n_groups)
+    print("Number of Stationary Groups: ", n_statn_groups)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset_files', nargs='+',
                         help='Trajnet dataset file(s).')
+    parser.add_argument('--pos_angle', type=int, default=0,
+                        help='axis angle of position cone (in deg)')
+    parser.add_argument('--vel_angle', type=int, default=0,
+                        help='relative velocity centre (in deg)')
+    parser.add_argument('--pos_range', type=int, default=15,
+                        help='range of position cone (in deg)')
+    parser.add_argument('--vel_range', type=int, default=180,
+                        help='relative velocity span (in deg)')
+    parser.add_argument('--dist_thresh', type=int, default=4,
+                        help='threshold of distance (in m)')
+    parser.add_argument('--n_theta', type=int, default=72,
+                        help='number of segments in polar plot radially')
+    parser.add_argument('--vr_n', type=int, default=10,
+                        help='number of segments in polar plot linearly')
+    parser.add_argument('--choice', default='pos',
+                        help='choice of interaction')
+    parser.add_argument('--n', type=int, default=15,
+                        help='number of plots')
     args = parser.parse_args()
 
     print('{dataset:>60s} |     N'.format(dataset=''))
@@ -243,44 +127,37 @@ def main():
             N=sum(1 for _ in load_all(dataset_file)),
         ))
 
-    pos_angle = 0
-    vel_angle = 180
-    pos_range = 15
-    vel_range = 10
-    dist_thresh = 4
-    n_theta = 72
-    vr_max = 2.5
-    vr_n = 10
     for dataset_file in args.dataset_files:
         # pass
 
-        # Interaction
-        # multimodality_plot(dataset_file, pos_angle, pos_range, vel_angle, vel_range, dist_thresh, n_theta, vr_max, vr_n)
+        ## Interaction
+        scene_plots(dataset_file, args)
 
-        # for vel_angle in [0, 180]:
-        #     print("VEL Angle: ", vel_angle)
-        #     for dist_thresh in range(1, 5):
-        #         print("Dist Thresh:", dist_thresh)
-        #         multimodality_plot(dataset_file, pos_angle, pos_range, vel_angle, vel_range, dist_thresh, n_theta, vr_max, vr_n)
+        ## Position Global 
+        # distribution_plots(dataset_file, args) 
 
-
-        # # Position Global 
-        # dataset_plots(dataset_file, pos_angle, pos_range, vel_angle, vel_range, dist_thresh, n_theta, vr_max, vr_n, 'pos')
-        
-        # # Positions for Agents moving in same direction
-        # dataset_plots(dataset_file, pos_angle, pos_range, 180, 10, dist_thresh, n_theta, vr_max, vr_n, 'bothpos')
-
-        # # Positions for Agents moving in opposite direction
-        # dataset_plots(dataset_file, pos_angle, pos_range, 0, 10, dist_thresh, n_theta, vr_max, vr_n, 'bothpos')
-
-        # # Velocity Global
-        # dataset_plots(dataset_file, pos_angle, pos_range, vel_angle, vel_range, dist_thresh, n_theta, vr_max, vr_n, 'vel')
-        
-        # # Velocity for Agents in Front
-        # dataset_plots(dataset_file, 0, 10, vel_angle, vel_range, dist_thresh, n_theta, vr_max, vr_n, 'bothvel')
-
-        # Grouping
-        group_plots(dataset_file)
+        ## Grouping
+        # group_plots(dataset_file, args)
 
 if __name__ == '__main__':
     main()
+
+# # Positions for Agents moving in same direction
+# dataset_plots(dataset_file, pos_angle, pos_range, 180, 10, dist_thresh, n_theta, vr_max, vr_n, 'bothpos')
+
+# # Positions for Agents moving in opposite direction
+# dataset_plots(dataset_file, pos_angle, pos_range, 0, 10, dist_thresh, n_theta, vr_max, vr_n, 'bothpos')
+
+# # Velocity Global
+# dataset_plots(dataset_file, pos_angle, pos_range, vel_angle, vel_range, dist_thresh, n_theta, vr_max, vr_n, 'vel')
+
+# # Velocity for Agents in Front
+# dataset_plots(dataset_file, 0, 10, vel_angle, vel_range, dist_thresh, n_theta, vr_max, vr_n, 'bothvel')
+
+    # for vel_angle in [0, 180]:
+    #     print("VEL Angle: ", vel_angle)
+    #     for dist_thresh in range(1, 5):
+    #         print("Dist Thresh:", dist_thresh)
+    #         multimodality_plot(dataset_file, args)
+
+

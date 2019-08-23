@@ -98,9 +98,13 @@ def compute_theta_vr(path):
     return theta2 - theta1, vr2
 
 
-def get_interaction_matrix(rows, pos_angle=4, pos_range=15, vel_angle=4, vel_range=15, dist_thresh=5, choice='pos', output='all'):
+def get_interaction_matrix(rows, args, output='all'):
     ## Computes the angle between velocity of pp at t_obs and velocity of pp at t_pred
     
+    ## Extract Args:
+    pos_angle, pos_range, vel_angle, vel_range, dist_thresh, choice = \
+    args.pos_angle, args.pos_range, args.vel_angle, args.vel_range, args.dist_thresh, args.choice
+
     path = rows[:, 0]
     neigh_path = rows[:, 1:]
     theta_interaction, sign_interaction = compute_theta_interaction(path, neigh_path)
