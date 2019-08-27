@@ -2,7 +2,8 @@ from collections import defaultdict
 from contextlib import contextmanager
 
 import matplotlib.pyplot as plt
-
+from matplotlib.animation import FuncAnimation
+from matplotlib import animation, rc
 
 @contextmanager
 def canvas(image_file=None, **kwargs):
@@ -136,8 +137,8 @@ def centre_paths(input_paths, output_file=None):
 def interaction_path(path, neigh, output_file=None):
     """Context to plot paths."""
     with canvas(output_file, figsize=(8, 8)) as ax:
-        ax.set_xlim([-10, 10])
-        ax.set_ylim([-10, 10])
+        ax.set_xlim([-20, 20])
+        ax.set_ylim([-20, 20])
         ax.set_xlabel('x [m]')
         ax.set_ylabel('y [m]')
 
@@ -184,3 +185,122 @@ def group_path(path, group, output_file=None):
 
         # frame
         ax.legend()
+
+
+def makeDynamicPlot(input_paths, path='', scenes_pred=[], draw_triangle=0, centre=True):
+    
+    if path == '':
+        path = r'../figure/dyn_pred_fig.gif'        
+    # len_pred = len(scenes_pred)
+    
+    # scenes = scenes[ind]
+    # if len(scenes_pred) > 0:
+    #     scenes_pred = scenes_pred[ind][0]
+    #     len_pred = 1
+    len_pred = 0
+    trajectory_i = input_paths[0]
+    interaction = input_paths[1:]
+    id_tmp = len(interaction)
+
+    ## Initialization of the plot#
+    fig = plt.figure(figsize=(12, 12))
+    lim_sup = 0
+    for i in trajectory_i:
+        tmp = max(abs(i.x), abs(i.y))
+        if tmp > lim_sup:
+            lim_sup = tmp
+    # ax1 = plt.axes(xlim=(my_axis[0], my_axis[1]), ylim=(my_axis[2], my_axis[3]))
+    ax1 = plt.axes(xlim=(-10, 10), ylim=(-10, 10))
+    #ax1 = plt.axes()
+    line, = ax1.plot([], [], marker='+')
+
+    surround={}
+    for w in range(id_tmp):
+        surround[w] = interaction[w]
+
+    # Creation of a dictionary with all interacting trajectories
+    x_int, y_int = [], []
+    x_pred, y_pred = [], []
+    dictio = {}
+    for j in range(id_tmp):
+        dictio['x%s' % j] = []
+        dictio['y%s' % j] = []
+
+    ## Plot initialization #2
+    lines = []
+    colors = ['tab:blue', 'tab:orange', 'tab:green']
+    for index in range(1 + id_tmp + draw_triangle + len_pred):
+        if index < 1:
+            lobj = ax1.plot([], [], marker='o', color='b', alpha=1)[0]
+        elif index < 1 + id_tmp:
+            lobj = ax1.plot([], [], marker='.', color = 'k', alpha = 0.6)[0]
+        elif index < 1 + id_tmp + draw_triangle:
+            lobj = ax1.plot([], [], marker='.', color = 'g', alpha = 0.6)[0]
+        else:
+            lobj = ax1.plot([], [], marker='o', color = 'tab:blue', alpha = 1)[0]
+        lines.append(lobj)
+
+    # Initialization
+    def init():
+        for line in lines:
+            line.set_data([], [])
+        return lines
+
+    # Create the animation
+    def animate(i):
+        label = 'timestep {0}'.format(i)
+        frame_nb = trajectory_i[i].frame
+        xbis = trajectory_i[i].x
+        ybis = trajectory_i[i].y
+        x_int.append(xbis)
+        y_int.append(ybis)
+        if len(x_int)>5:
+            x_int.pop(0)
+            y_int.pop(0)
+            
+        # if len(scenes_pred) > 0:
+        #     if i >= 8:
+        #         x_pred.append(scenes_pred[i].x)
+        #         y_pred.append(scenes_pred[i].y)
+        #         if len(x_pred)>3:
+        #             x_pred.pop(0)
+        #             y_pred.pop(0)
+
+        for j in range(id_tmp):
+            if len(dictio['x%s' % j])>4:
+                        dictio['x%s' % j].pop(0)
+                        dictio['y%s' % j].pop(0)
+            for jj in range(len(surround[j])):
+                if surround[j][jj].frame == frame_nb:
+                    dictio['x%s' % j].append(surround[j][jj].x)
+                    dictio['y%s' % j].append(surround[j][jj].y)
+
+        xlist = [x_int]
+        ylist = [y_int]
+        for j in range(id_tmp):
+            xlist.append(dictio['x%s' % j])
+            ylist.append(dictio['y%s' % j])
+
+        
+        # xlist.append(x_pred)
+        # ylist.append(y_pred)
+
+        ax1.set_xlabel(label)
+
+        print(len(xlist))
+        print(len(lines))
+        for lnum, line in enumerate(lines):
+            line.set_data(xlist[lnum], ylist[lnum])  # set data for each line separately.
+
+        return lines
+
+    # Create animation
+    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=21, blit=True)#interval=500,
+
+    # Save animation
+    Writer = animation.writers['imagemagick']
+    writer = Writer(fps = 2)
+    
+    if path is not None:
+        anim.save(path, writer=writer, dpi=128)
+    #plt.close()
