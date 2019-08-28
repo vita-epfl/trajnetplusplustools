@@ -13,6 +13,7 @@ def scene_plots(input_file, args):
         path = rows[:, 0]
         neigh_path = rows[:, 1:]
         interaction_matrix = get_interaction_matrix(rows, args, output='matrix')
+        # "Shape": PredictionLength x Number of Neighbours
         interaction_index = np.any(interaction_matrix, axis=0)
         neigh = neigh_path[:,interaction_index]
 
@@ -28,6 +29,7 @@ def scene_plots(input_file, args):
 
 def distribution_plots(input_file, args):
 	## Distributions of interactions
+    n_theta, vr_n, dist_thresh, choice = args.n_theta, args.vr_n, args.dist_thresh, args.choice
     distr = np.zeros((n_theta, vr_n))
     def fill_grid(theta_vr):
         theta, vr, sign = theta_vr
@@ -104,17 +106,17 @@ def main():
                         help='axis angle of position cone (in deg)')
     parser.add_argument('--vel_angle', type=int, default=0,
                         help='relative velocity centre (in deg)')
-    parser.add_argument('--pos_range', type=int, default=15,
+    parser.add_argument('--pos_range', type=int, default=10,
                         help='range of position cone (in deg)')
-    parser.add_argument('--vel_range', type=int, default=180,
-                        help='relative velocity span (in deg)')
+    parser.add_argument('--vel_range', type=int, default=10,
+                        help='relative velocity span (in rsdeg)')
     parser.add_argument('--dist_thresh', type=int, default=4,
                         help='threshold of distance (in m)')
     parser.add_argument('--n_theta', type=int, default=72,
                         help='number of segments in polar plot radially')
     parser.add_argument('--vr_n', type=int, default=10,
                         help='number of segments in polar plot linearly')
-    parser.add_argument('--choice', default='pos',
+    parser.add_argument('--choice', default='bothvel',
                         help='choice of interaction')
     parser.add_argument('--n', type=int, default=15,
                         help='number of plots')
