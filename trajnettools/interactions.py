@@ -23,7 +23,8 @@ def compute_velocity_interaction(path, neigh_path, time_param=(9, 21, 9, 3)):
     for n in range(neigh_vel.shape[1]):
         theta2 = np.arctan2(neigh_vel[:, n, 1], neigh_vel[:, n, 0])
         theta_diff = (theta2 - theta1) * 180 / np.pi
-        theta_diff = (theta_diff - 180) % 360
+        # theta_diff = (theta_diff - 180) % 360
+        theta_diff = theta_diff % 360
         theta_sign = theta_diff > 180
         # sign_interaction[:, n] = np.sign(theta2 - theta1 - np.pi)
         # vel_interaction[:, n] = np.abs((theta2 - theta1 - np.pi)* 180 / np.pi)
@@ -63,17 +64,20 @@ def compute_dist_rel(path, neigh_path, time_param=(9, 21, 9, 3)):
     return dist_rel
 
 
-def compute_interaction(theta_rel, dist_rel, angle, dist_thresh, angle_range):
+def compute_interaction(theta_rel_orig, dist_rel, angle, dist_thresh, angle_range):
     ## Interaction is defined as 
     ## 1. distance < threshold and 
     ## 2. angle between velocity of pp and line joining pp to neighbours
     
     # theta_bool = (theta_rel < angle)
     # dist_bool = (dist_rel < dist_thresh)
+    theta_rel = np.copy(theta_rel_orig)
     angle_low = (angle - angle_range) 
     angle_high = (angle + angle_range) 
     if (angle - angle_range) < 0 :
         theta_rel[np.where(theta_rel > 180)] = theta_rel[np.where(theta_rel > 180)] - 360
+    if (angle + angle_range) > 360 :
+        raise ValueError
     # print(theta_rel != nan)
     # print("Low: ", angle_low)
     # print("High: ", angle_high)
@@ -81,21 +85,6 @@ def compute_interaction(theta_rel, dist_rel, angle, dist_thresh, angle_range):
     interaction_matrix = (angle_low < theta_rel) & (theta_rel <= angle_high) & (dist_rel < dist_thresh) & (theta_rel < 500) == 1
     # print("interaction_matrix", interaction_matrix)
     return interaction_matrix
-
-
-def compute_theta_vr(path):
-    ## Computes the angle between velocity of pp at t_obs and velocity of pp at t_pred
-    
-    row1, row2, row3, row4 = path[5], path[8], path[17], path[20]
-    diff1 = np.array([row2[0] - row1[0], row2[1] - row1[1]])
-    diff2 = np.array([row4[0] - row3[0], row4[1] - row3[1]])
-    theta1 = np.arctan2(diff1[1], diff1[0])
-    theta2 = np.arctan2(diff2[1], diff2[0])
-    vr1 = np.linalg.norm(diff1) / (3 * 0.4)
-    vr2 = np.linalg.norm(diff2) / (3 * 0.4)
-    if vr1 < 0.1:
-        return 0, 0
-    return theta2 - theta1, vr2
 
 
 def get_interaction_matrix(rows, args, output='all'):
@@ -115,13 +104,11 @@ def get_interaction_matrix(rows, args, output='all'):
     if choice == 'pos':
         interaction_matrix = compute_interaction(theta_interaction, dist_rel, pos_angle, dist_thresh, pos_range)
         chosen_interaction = theta_interaction
-        # angle_thres = pos_angle
 
     elif choice == 'vel':
         interaction_matrix = compute_interaction(vel_interaction, dist_rel, vel_angle, dist_thresh, vel_range)
         chosen_interaction = vel_interaction
         sign_interaction = sign_vel_interaction
-        # angle_thres = vel_angle
 
     elif choice == 'bothpos':
         interaction_matrix = compute_interaction(theta_interaction, dist_rel, pos_angle, dist_thresh, pos_range) \
@@ -164,3 +151,17 @@ def check_group(rows, dist_thresh=0.8, std_thresh=0.1):
 
     group = neigh_path[:, group_matrix, :]
     return path, group, np.any(group_matrix)
+
+# def compute_theta_vr(path):
+#     ## Computes the angle between velocity of pp at t_obs and velocity of pp at t_pred
+    
+#     row1, row2, row3, row4 = path[5], path[8], path[17], path[20]
+#     diff1 = np.array([row2[0] - row1[0], row2[1] - row1[1]])
+#     diff2 = np.array([row4[0] - row3[0], row4[1] - row3[1]])
+#     theta1 = np.arctan2(diff1[1], diff1[0])
+#     theta2 = np.arctan2(diff2[1], diff2[0])
+#     vr1 = np.linalg.norm(diff1) / (3 * 0.4)
+#     vr2 = np.linalg.norm(diff2) / (3 * 0.4)
+#     if vr1 < 0.1:
+#         return 0, 0
+#     return theta2 - theta1, vr2

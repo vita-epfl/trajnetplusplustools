@@ -148,13 +148,13 @@ def interaction_path(path, neigh, output_file=None):
         path, neigh = center(path, neigh)
 
         # Primary Track
-        ax.plot(path[:, 0], path[:, 1], label = 'primary')
+        ax.plot(path[:, 0], path[:, 1], color='b', label = 'primary')
         ax.plot(path[0, 0], path[0, 1], color='g', marker='o', label = 'start point')
         ax.plot(path[-1, 0], path[-1, 1], color='r', marker='x', label = 'end point')
 
         # Neighbour Track
-        for j in range(neigh.shape[1]):
-            ax.plot(neigh[:, j, 0], neigh[:, j, 1], label = 'neighbour' + str(j+1))
+        for j in range(neigh.shape[1]):             
+            ax.plot(neigh[:, j, 0], neigh[:, j, 1], color='g', label = 'neighbour' + str(j+1))
             ax.plot(neigh[0, j, 0], neigh[0, j, 1], color='g', marker='o', label = 'start point')
             ax.plot(neigh[-1, j, 0], neigh[-1, j, 1], color='r', marker='x', label = 'end point')
 
@@ -187,10 +187,10 @@ def group_path(path, group, output_file=None):
         ax.legend()
 
 
-def makeDynamicPlot(input_paths, path='', scenes_pred=[], draw_triangle=0, centre=True):
+def makeDynamicPlot(input_paths, path='', scenes_pred=[], draw_triangle=0, centre=True, np=False):
     
     if path == '':
-        path = r'../figure/dyn_pred_fig.gif'        
+        path = r'figure/dyn_pred_fig.gif'        
     # len_pred = len(scenes_pred)
     
     # scenes = scenes[ind]
@@ -201,14 +201,14 @@ def makeDynamicPlot(input_paths, path='', scenes_pred=[], draw_triangle=0, centr
     trajectory_i = input_paths[0]
     interaction = input_paths[1:]
     id_tmp = len(interaction)
-
+    print(id_tmp)
     ## Initialization of the plot#
     fig = plt.figure(figsize=(12, 12))
-    lim_sup = 0
-    for i in trajectory_i:
-        tmp = max(abs(i.x), abs(i.y))
-        if tmp > lim_sup:
-            lim_sup = tmp
+    # lim_sup = 0
+    # for i in trajectory_i:
+    #     tmp = max(abs(i.x), abs(i.y))
+    #     if tmp > lim_sup:
+    #         lim_sup = tmp
     # ax1 = plt.axes(xlim=(my_axis[0], my_axis[1]), ylim=(my_axis[2], my_axis[3]))
     ax1 = plt.axes(xlim=(-10, 10), ylim=(-10, 10))
     #ax1 = plt.axes()
@@ -249,9 +249,13 @@ def makeDynamicPlot(input_paths, path='', scenes_pred=[], draw_triangle=0, centr
     # Create the animation
     def animate(i):
         label = 'timestep {0}'.format(i)
-        frame_nb = trajectory_i[i].frame
-        xbis = trajectory_i[i].x
-        ybis = trajectory_i[i].y
+        if not np:
+            frame_nb = trajectory_i[i].frame
+            xbis = trajectory_i[i].x
+            ybis = trajectory_i[i].y
+        else:
+            xbis = trajectory_i[i][0]
+            ybis = trajectory_i[i][1]
         x_int.append(xbis)
         y_int.append(ybis)
         if len(x_int)>5:
@@ -270,11 +274,14 @@ def makeDynamicPlot(input_paths, path='', scenes_pred=[], draw_triangle=0, centr
             if len(dictio['x%s' % j])>4:
                         dictio['x%s' % j].pop(0)
                         dictio['y%s' % j].pop(0)
-            for jj in range(len(surround[j])):
-                if surround[j][jj].frame == frame_nb:
-                    dictio['x%s' % j].append(surround[j][jj].x)
-                    dictio['y%s' % j].append(surround[j][jj].y)
-
+            if not np:
+                for jj in range(len(surround[j])):
+                    if surround[j][jj].frame == frame_nb:
+                        dictio['x%s' % j].append(surround[j][jj].x)
+                        dictio['y%s' % j].append(surround[j][jj].y)
+            else: 
+                dictio['x%s' % j].append(surround[j][i][0])
+                dictio['y%s' % j].append(surround[j][i][1])
         xlist = [x_int]
         ylist = [y_int]
         for j in range(id_tmp):
@@ -287,8 +294,8 @@ def makeDynamicPlot(input_paths, path='', scenes_pred=[], draw_triangle=0, centr
 
         ax1.set_xlabel(label)
 
-        print(len(xlist))
-        print(len(lines))
+        # print(len(xlist))
+        # print(len(lines))
         for lnum, line in enumerate(lines):
             line.set_data(xlist[lnum], ylist[lnum])  # set data for each line separately.
 

@@ -21,9 +21,11 @@ def scene_plots(input_file, args):
         if (np.sum(interaction_index) == 1) & (np.linalg.norm(path[-1] - path[0]) > 5.0):
             n_int += 1
             if (n_int < args.n):
+                print(path)
+                print(neigh[:, 0])
                 with show.interaction_path(path, neigh):
                     pass
-
+                show.makeDynamicPlot(rows.transpose(1, 0, 2), np=True)
     print("Number of Instances: ", n_int) 
 
 
@@ -49,14 +51,21 @@ def distribution_plots(input_file, args):
             unbinned_vr[thetap[th]].append(vr[th])
     vr_max = dist_thresh
 
+    hist = []
+    def fill_hist(vel):
+        hist.append(vel)
+
     #run
     for primary_ped, rows in load_all(input_file):
         interaction_matrix, chosen_true, sign_true, dist_true = \
         get_interaction_matrix(rows, args)
 
         fill_grid((chosen_true, dist_true, sign_true))
-        fill_unbinned_vr((chosen_true, dist_true, sign_true))      
-
+        fill_unbinned_vr((chosen_true, dist_true, sign_true)) 
+        fill_hist(chosen_true)
+        # if np.any(chosen_true):     
+        #     print("MAX, MIN: ", max(chosen_true), min(chosen_true))
+        #     print("Shape: ", chosen_true.shape)
     with show.canvas(input_file + '.' + choice + '.png', figsize=(4, 4), subplot_kw={'polar': True}) as ax:
         r_edges = np.linspace(0, vr_max, distr.shape[1] + 1)
         theta_edges = np.linspace(0, 2*np.pi, distr.shape[0] + 1)
@@ -75,6 +84,9 @@ def distribution_plots(input_file, args):
 
         ax.grid(linestyle='dotted')
         ax.legend()    
+
+    with show.canvas(input_file + '.' + choice + '_hist.png', figsize=(4, 4)) as ax:
+        ax.hist(np.hstack(hist), bins=n_theta)
 
 def group_plots(input_file, args, dist_thresh=0.8, std_thresh=0.1):
     ## Identify and Visualize Groups
@@ -108,7 +120,7 @@ def main():
                         help='relative velocity centre (in deg)')
     parser.add_argument('--pos_range', type=int, default=10,
                         help='range of position cone (in deg)')
-    parser.add_argument('--vel_range', type=int, default=10,
+    parser.add_argument('--vel_range', type=int, default=180,
                         help='relative velocity span (in rsdeg)')
     parser.add_argument('--dist_thresh', type=int, default=4,
                         help='threshold of distance (in m)')
@@ -118,7 +130,7 @@ def main():
                         help='number of segments in polar plot linearly')
     parser.add_argument('--choice', default='bothvel',
                         help='choice of interaction')
-    parser.add_argument('--n', type=int, default=15,
+    parser.add_argument('--n', type=int, default=2,
                         help='number of plots')
     args = parser.parse_args()
 
@@ -133,10 +145,10 @@ def main():
         # pass
 
         ## Interaction
-        scene_plots(dataset_file, args)
+        # scene_plots(dataset_file, args)
 
         ## Position Global 
-        # distribution_plots(dataset_file, args) 
+        distribution_plots(dataset_file, args) 
 
         ## Grouping
         # group_plots(dataset_file, args)
