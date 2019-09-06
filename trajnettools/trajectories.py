@@ -30,8 +30,10 @@ def main():
         scenes = reader.scenes(randomize=args.random)
 
     for scene_id, paths in scenes:
-        output = '{}.scene{}.png'.format(args.output, scene_id)
-        with show.paths(paths, output):
+        # output = '{}.scene{}.png'.format(args.output, scene_id)
+        # with show.paths(paths, output):
+        #     pass
+        with show.paths(paths):
             pass
         # output = '{}.scene{}.gif'.format(args.output, scene_id)
         # show.makeDynamicPlot(paths, output) 

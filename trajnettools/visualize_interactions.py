@@ -4,12 +4,24 @@ import numpy as np
 
 from . import load_all
 from . import show
+from . import Reader
+from . import metrics
 from .interactions import *
 import matplotlib.pyplot as plt
+from . import kalman
+
+def non_linear(scene):
+    primary_prediction, _ = kalman.predict(scene)[0] 
+    score = metrics.final_l2(scene[0], primary_prediction)
+    return score > 2.0
 
 def scene_plots(input_file, args):
     n_int = 0
-    for primary_ped, rows in load_all(input_file):
+    reader = Reader(input_file, scene_type='paths')
+    scenes = [s for _, s in reader.scenes()]
+    for scene in scenes:
+        rows = reader.paths_to_xy(scene)
+    # for primary_ped, rows in load_all(input_file):
         path = rows[:, 0]
         neigh_path = rows[:, 1:]
         interaction_matrix = get_interaction_matrix(rows, args, output='matrix')
@@ -17,12 +29,15 @@ def scene_plots(input_file, args):
         interaction_index = interaction_length(interaction_matrix, length=5)
         neigh = neigh_path[:,interaction_index]
         ## n Examples of interactions ##
-        if (np.sum(interaction_index) == 1) & (np.linalg.norm(path[-1] - path[0]) > 5.0):
-            n_int += 1
-            if (n_int < args.n):
-                with show.interaction_path(path, neigh):
-                    pass
-                # show.makeDynamicPlot(rows.transpose(1, 0, 2), np=True)
+        if (np.sum(interaction_index) == 1) & (np.linalg.norm(path[-1] - path[0]) > 4.0):
+            if non_linear(scene):    
+                n_int += 1  
+                if (n_int < args.n):
+                    with show.interaction_path(path, neigh):
+                        pass
+                #     with show.interaction_path(path, neigh_path):
+                #         pass
+                    # show.makeDynamicPlot(rows.transpose(1, 0, 2), np=True)
     print("Number of Instances: ", n_int) 
 
 def interaction_length(interaction_matrix, length=1):
@@ -30,7 +45,7 @@ def interaction_length(interaction_matrix, length=1):
     return interaction_sum >= length
 
 def distribution_plots(input_file, args):
-	## Distributions of interactions
+    ## Distributions of interactions
     n_theta, vr_n, dist_thresh, choice = args.n_theta, args.vr_n, args.dist_thresh, args.choice
     distr = np.zeros((n_theta, vr_n))
     def fill_grid(theta_vr):
@@ -97,7 +112,7 @@ def group_plots(input_file, args, dist_thresh=0.8, std_thresh=0.1):
     n_statn_groups = 0
     fig, ax = plt.subplots(1, 1, figsize=(6, 6))
     for primary_ped, rows in load_all(input_file):
-        path, group, flag = check_group(rows, dist_thresh, std_thresh)        
+        path, group, flag = check_group(rows, args, dist_thresh, std_thresh)        
         if flag:
             n_groups += 1
             if np.linalg.norm(path[-1] - path[0]) < 1.0:
@@ -114,13 +129,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset_files', nargs='+',
                         help='Trajnet dataset file(s).')
-    parser.add_argument('--pos_angle', type=int, default=0,
+    parser.add_argument('--pos_angle', type=int, default=90,
                         help='axis angle of position cone (in deg)')
     parser.add_argument('--vel_angle', type=int, default=0,
                         help='relative velocity centre (in deg)')
-    parser.add_argument('--pos_range', type=int, default=5,
+    parser.add_argument('--pos_range', type=int, default=45,
                         help='range of position cone (in deg)')
-    parser.add_argument('--vel_range', type=int, default=10,
+    parser.add_argument('--vel_range', type=int, default=20,
                         help='relative velocity span (in rsdeg)')
     parser.add_argument('--dist_thresh', type=int, default=4,
                         help='threshold of distance (in m)')
@@ -128,7 +143,7 @@ def main():
                         help='number of segments in polar plot radially')
     parser.add_argument('--vr_n', type=int, default=10,
                         help='number of segments in polar plot linearly')
-    parser.add_argument('--choice', default='bothvel',
+    parser.add_argument('--choice', default='pos',
                         help='choice of interaction')
     parser.add_argument('--n', type=int, default=10,
                         help='number of plots')
@@ -145,13 +160,13 @@ def main():
         # pass
 
         ## Interaction
-        scene_plots(dataset_file, args)
+        # scene_plots(dataset_file, args)
 
         ## Position Global 
         # distribution_plots(dataset_file, args) 
 
         ## Grouping
-        # group_plots(dataset_file, args)
+        group_plots(dataset_file, args)
 
 if __name__ == '__main__':
     main()

@@ -6,9 +6,6 @@ from . import load_all
 from . import show
 import matplotlib.pyplot as plt
 
-
-    
-
 def compute_velocity_interaction(path, neigh_path, time_param=(9, 21, 9, 3)):
     ## Computes the angle between velocity of neighbours and velocity of pp
 
@@ -135,9 +132,19 @@ def get_interaction_matrix(rows, args, output='all'):
     else:
         raise NotImplementedError 
 
-def check_group(rows, dist_thresh=0.8, std_thresh=0.1):
+def check_group(rows, args, dist_thresh=0.8, std_thresh=0.1):
+
     path = rows[:, 0]
     neigh_path = rows[:, 1:]
+
+    ## Horizontal Position
+    args.pos_angle = 90
+    interaction_matrix_1 = get_interaction_matrix(rows, args, output='matrix')
+    args.pos_angle = 270    
+    interaction_matrix_2 = get_interaction_matrix(rows, args, output='matrix')
+    neighs_side = np.any(interaction_matrix_1, axis=0) | np.any(interaction_matrix_2, axis=0)
+
+    ## Distance Maintain
     # dist_rel = compute_dist_rel(path, neigh_path)
     dist_rel = np.linalg.norm((neigh_path - path[:, np.newaxis, :]), axis=2)
 
@@ -146,22 +153,10 @@ def check_group(rows, dist_thresh=0.8, std_thresh=0.1):
     std_dist = np.std(dist_rel, axis=0)
     # print(std_dist.shape)
 
-    group_matrix = (mean_dist < dist_thresh) & (std_dist < std_thresh)
+    group_matrix = (mean_dist < dist_thresh) & (std_dist < std_thresh) & ( ~ neighs_side )
+    # group_matrix = (mean_dist < dist_thresh) & (std_dist < std_thresh)
     # print("Group Matrix: ", group_matrix)
 
     group = neigh_path[:, group_matrix, :]
     return path, group, np.any(group_matrix)
 
-# def compute_theta_vr(path):
-#     ## Computes the angle between velocity of pp at t_obs and velocity of pp at t_pred
-    
-#     row1, row2, row3, row4 = path[5], path[8], path[17], path[20]
-#     diff1 = np.array([row2[0] - row1[0], row2[1] - row1[1]])
-#     diff2 = np.array([row4[0] - row3[0], row4[1] - row3[1]])
-#     theta1 = np.arctan2(diff1[1], diff1[0])
-#     theta2 = np.arctan2(diff2[1], diff2[0])
-#     vr1 = np.linalg.norm(diff1) / (3 * 0.4)
-#     vr2 = np.linalg.norm(diff2) / (3 * 0.4)
-#     if vr1 < 0.1:
-#         return 0, 0
-#     return theta2 - theta1, vr2
