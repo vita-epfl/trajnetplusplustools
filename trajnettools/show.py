@@ -134,13 +134,13 @@ def center_scene(path, neigh_path, time_param=(9, 21, 9, 3)):
     else:
         return path, neigh_path
 
-def center(path, neigh_path, time_param=(9, 21, 9, 3)):
-    ## Centre scene
-    T_OBS, T_SEQ, T_INT, T_STR = time_param 
-    center = path[T_INT, :]
-    path = path - center
-    neigh_path = neigh_path - center
-    return path, neigh_path
+# def center(path, neigh_path, time_param=(9, 21, 9, 3)):
+#     ## Centre scene
+#     T_OBS, T_SEQ, T_INT, T_STR = time_param 
+#     center = path[T_INT, :]
+#     path = path - center
+#     neigh_path = neigh_path - center
+#     return path, neigh_path
 
 @contextmanager
 def centre_paths(input_paths, output_file=None):
@@ -185,7 +185,7 @@ def centre_paths(input_paths, output_file=None):
         ax.legend()
 
 @contextmanager
-def interaction_path(path, neigh, output_file=None):
+def interaction_path(path, neigh, kf=None, output_file=None):
     """Context to plot paths."""
     with canvas(output_file, figsize=(8, 8)) as ax:
         ax.set_xlim([-20, 20])
@@ -196,18 +196,27 @@ def interaction_path(path, neigh, output_file=None):
         yield ax
         
         # Center
-        path, neigh = center(path, neigh)
+        # path, neigh = center(path, neigh)
+        center = path[9, :]
+        path = path - center
+        neigh = neigh - center
 
         # Primary Track
-        ax.plot(path[:, 0], path[:, 1], color='b', label = 'primary')
+        ax.scatter(path[:, 0], path[:, 1], color='b', label = 'primary')
+        # ax.plot(path[:, 0], path[:, 1], color='b', label = 'primary')
         ax.plot(path[0, 0], path[0, 1], color='g', marker='o', label = 'start point')
         ax.plot(path[-1, 0], path[-1, 1], color='r', marker='x', label = 'end point')
 
         # Neighbour Track
         for j in range(neigh.shape[1]):             
             ax.plot(neigh[:, j, 0], neigh[:, j, 1], color='g', label = 'neighbour' + str(j+1))
-            ax.plot(neigh[0, j, 0], neigh[0, j, 1], color='g', marker='o', label = 'start point')
-            ax.plot(neigh[-1, j, 0], neigh[-1, j, 1], color='r', marker='x', label = 'end point')
+            ax.plot(neigh[0, j, 0], neigh[0, j, 1], color='g', marker='o')
+            ax.plot(neigh[-1, j, 0], neigh[-1, j, 1], color='r', marker='x')
+
+        # kalman if present
+        if kf is not None:
+            kf = kf - center
+            ax.plot(kf[:, 0, 0], kf[:, 0, 1], color='r', label = 'kalman')
 
         # frame
         ax.legend()

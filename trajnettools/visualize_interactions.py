@@ -13,7 +13,7 @@ from . import kalman
 def non_linear(scene):
     primary_prediction, _ = kalman.predict(scene)[0] 
     score = metrics.final_l2(scene[0], primary_prediction)
-    return score > 0.5
+    return score > 1.0, primary_prediction
 
 def interaction_length(interaction_matrix, length=1):
     interaction_sum = np.sum(interaction_matrix, axis=0)
@@ -61,13 +61,17 @@ def interaction_plots(input_file, interaction_type, args):
         if interaction_type == 'group':
             num_interactions = np.any(interaction_index)
 
+        
         ## Calculate and display
         if num_interactions & (np.linalg.norm(path[-1] - path[0]) > 1.0):
-            if non_linear(scene):
+            nl_tag, kf = non_linear(scene)
+            kf = reader.paths_to_xy([kf])
+            if nl_tag:
                 n_instances += 1 
                 ## n Examples of interactions ##
                 if (n_instances < args.n):
-                    with show.interaction_path(path, neigh):
+                    output = '{}_{}_{}.png'.format(input_file, interaction_type, n_instances)
+                    with show.interaction_path(path, neigh, kf=kf, output_file=output):
                         pass
                     # with show.interaction_path(path, neigh_path):
                         # parse_args
