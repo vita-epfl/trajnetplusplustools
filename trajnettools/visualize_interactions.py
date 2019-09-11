@@ -13,7 +13,7 @@ from . import kalman
 def non_linear(scene):
     primary_prediction, _ = kalman.predict(scene)[0] 
     score = metrics.final_l2(scene[0], primary_prediction)
-    return score > 1.0
+    return score > 0.5
 
 def interaction_length(interaction_matrix, length=1):
     interaction_sum = np.sum(interaction_matrix, axis=0)
@@ -55,22 +55,28 @@ def interaction_plots(input_file, interaction_type, args):
         neigh_path = rows[:, 1:]
         neigh = neigh_path[:,interaction_index]
 
-        num_interactions = np.sum(interaction_index) == 1
+        num_interactions = np.any(interaction_index)
+        # num_interactions = np.sum(interaction_index) == 1
+
         if interaction_type == 'group':
             num_interactions = np.any(interaction_index)
 
         ## Calculate and display
         if num_interactions & (np.linalg.norm(path[-1] - path[0]) > 1.0):
-            if non_linear(scene) or interaction_type == 'group':
+            if non_linear(scene):
                 n_instances += 1 
                 ## n Examples of interactions ##
                 if (n_instances < args.n):
                     with show.interaction_path(path, neigh):
                         pass
+                    # with show.interaction_path(path, neigh_path):
+                        # parse_args
                 ## if required
                 # show.makeDynamicPlot(rows.transpose(1, 0, 2), np=True)
 
     print("Number of Instances: ", n_instances) 
+
+# or interaction_type == 'group'
 
 def distribution_plots(input_file, args):
     ## Distributions of interactions
@@ -141,7 +147,7 @@ def main():
                         help='range of position cone (in deg)')
     parser.add_argument('--vel_range', type=int, default=20,
                         help='relative velocity span (in rsdeg)')
-    parser.add_argument('--dist_thresh', type=int, default=4,
+    parser.add_argument('--dist_thresh', type=int, default=5,
                         help='threshold of distance (in m)')
     parser.add_argument('--n_theta', type=int, default=72,
                         help='number of segments in polar plot radially')
@@ -166,15 +172,15 @@ def main():
     ## args
     if interaction_type == 'lf':
         args.pos_angle = 0
-        args.pos_range = 10
+        args.pos_range = 15 
         args.vel_angle = 0
-        args.vel_range = 20
+        args.vel_range = 15 
 
     elif interaction_type == 'ca': 
         args.pos_angle = 0
-        args.pos_range = 10
+        args.pos_range = 15 #10
         args.vel_angle = 180
-        args.vel_range = 20
+        args.vel_range = 15 #20
 
     elif interaction_type == 'group': 
         args.pos_range = 45

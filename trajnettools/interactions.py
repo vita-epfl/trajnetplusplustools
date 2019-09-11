@@ -2,8 +2,6 @@ import argparse
 import math
 import numpy as np
 
-from . import load_all
-from . import show
 import matplotlib.pyplot as plt
 
 def compute_velocity_interaction(path, neigh_path, time_param=(9, 21, 9, 3)):
