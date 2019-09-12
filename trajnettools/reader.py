@@ -32,11 +32,7 @@ class Reader(object):
 
                 track = line.get('track')
                 if track is not None:
-                    # try:
                     row = TrackRow(track['f'], track['p'], track['x'], track['y'], track.get('prediction_number'), track.get('scene_id'))
-                        # print(row)
-                    # except:
-                        # row = TrackRow(track['f'], track['p'], track['x'], track['y'], track.get('prediction_number'))
                     self.tracks_by_frame[row.frame].append(row)
                     continue
 
