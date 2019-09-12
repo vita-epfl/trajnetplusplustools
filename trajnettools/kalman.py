@@ -10,9 +10,7 @@ def predict(paths, predict_all=False):
     if not predict_all:
         paths = paths[0:1]
     
-    # print("Kalman Predict: ", paths)
     for i, path in enumerate(paths):
-        # print("i :", i)
         path = paths[i]
         initial_state_mean = [path[0].x, 0, path[0].y, 0]
 

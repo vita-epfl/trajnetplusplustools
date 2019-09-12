@@ -12,8 +12,9 @@ class Reader(object):
     """Read trajnet files.
 
     :param scene_type: None -> numpy.array, 'rows' -> TrackRow and SceneRow, 'paths': grouped rows (primary pedestrian first)
+    :param image_file: Associated image file of the scene 
     """
-    def __init__(self, input_file, scene_type=None):
+    def __init__(self, input_file, scene_type=None, image_file=None):
         if scene_type is not None and scene_type not in {'rows', 'paths'}:
             raise Exception('scene_type not supported')
         self.scene_type = scene_type
@@ -22,6 +23,7 @@ class Reader(object):
         self.scenes_by_id = dict()
 
         self.read_file(input_file)
+        self.image = self.read_image(image_file)
 
     def read_file(self, input_file):
         with open(input_file, 'r') as f:
@@ -43,6 +45,10 @@ class Reader(object):
                     row = SceneRow(scene['id'], scene['p'], scene['s'], scene['e'], scene['fps'], scene['tag'])
                     self.scenes_by_id[row.scene] = row
 
+    def read_image(self, image_file):
+        ## TODO 
+        return None
+        
     def scenes(self, randomize=False, limit=0, ids=None, sample=None):
         scene_ids = self.scenes_by_id.keys()
         if ids is not None:

@@ -1,6 +1,7 @@
 data/
 output/
 .DS_Store
+backup/
 
 # profiling
 *.prof

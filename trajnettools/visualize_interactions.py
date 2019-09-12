@@ -75,12 +75,11 @@ def interaction_plots(input_file, interaction_type, args):
                         pass
                     # with show.interaction_path(path, neigh_path):
                         # parse_args
+
                 ## if required
                 # show.makeDynamicPlot(rows.transpose(1, 0, 2), np=True)
 
     print("Number of Instances: ", n_instances) 
-
-# or interaction_type == 'group'
 
 def distribution_plots(input_file, args):
     ## Distributions of interactions
@@ -182,9 +181,9 @@ def main():
 
     elif interaction_type == 'ca': 
         args.pos_angle = 0
-        args.pos_range = 15 #10
+        args.pos_range = 15
         args.vel_angle = 180
-        args.vel_range = 15 #20
+        args.vel_range = 15
 
     elif interaction_type == 'group': 
         args.pos_range = 45
@@ -201,35 +200,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-# # Positions for Agents moving in same direction
-# dataset_plots(dataset_file, pos_angle, pos_range, 180, 10, dist_thresh, n_theta, vr_max, vr_n, 'bothpos')
-
-# # Positions for Agents moving in opposite direction
-# dataset_plots(dataset_file, pos_angle, pos_range, 0, 10, dist_thresh, n_theta, vr_max, vr_n, 'bothpos')
-
-# # Velocity Global
-# dataset_plots(dataset_file, pos_angle, pos_range, vel_angle, vel_range, dist_thresh, n_theta, vr_max, vr_n, 'vel')
-
-# # Velocity for Agents in Front
-# dataset_plots(dataset_file, 0, 10, vel_angle, vel_range, dist_thresh, n_theta, vr_max, vr_n, 'bothvel')
-
-    # for vel_angle in [0, 180]:
-    #     print("VEL Angle: ", vel_angle)
-    #     for dist_thresh in range(1, 5):
-    #         print("Dist Thresh:", dist_thresh)
-    #         multimodality_plot(dataset_file, args)
-
-
-
-
-# if flag:
-#     n_groups += 1
-#     if np.linalg.norm(path[-1] - path[0]) < 1.0:
-#         n_statn_groups += 1
-#     if n_groups < args.n:
-#         with show.group_path(path, group):
-#             pass
-
-# print("Number of Groups: ", n_groups)
-# print("Number of Stationary Groups: ", n_statn_groups)
