@@ -57,8 +57,8 @@ def paths(input_paths, output_file=None):
 def interaction_path(path, neigh, kf=None, output_file=None):
     """Context to plot paths."""
     with canvas(output_file, figsize=(8, 8)) as ax:
-        ax.set_xlim([-20, 20])
-        ax.set_ylim([-20, 20])
+        ax.set_xlim([-10, 10])
+        ax.set_ylim([-10, 10])
         ax.set_xlabel('x [m]')
         ax.set_ylabel('y [m]')
 
@@ -70,14 +70,12 @@ def interaction_path(path, neigh, kf=None, output_file=None):
         neigh = neigh - center
 
         # Primary Track
-        ax.scatter(path[:, 0], path[:, 1], color='b', label = 'primary')
-        # ax.plot(path[:, 0], path[:, 1], color='b', label = 'primary')
-        ax.plot(path[0, 0], path[0, 1], color='g', marker='o', label = 'start point')
-        ax.plot(path[-1, 0], path[-1, 1], color='r', marker='x', label = 'end point')
+        ax.scatter(path[:, 0], path[:, 1], s=2.5, color='b', label='primary')
+        ax.plot(path[0, 0], path[0, 1], color='g', marker='o', label='start point')
+        ax.plot(path[-1, 0], path[-1, 1], color='r', marker='x', label='end point')
 
-        # Neighbour Track
         for j in range(neigh.shape[1]):             
-            ax.plot(neigh[:, j, 0], neigh[:, j, 1], color='g', label = 'neighbour' + str(j+1))
+            ax.plot(neigh[:, j, 0], neigh[:, j, 1], color='g')
             ax.plot(neigh[0, j, 0], neigh[0, j, 1], color='g', marker='o')
             ax.plot(neigh[-1, j, 0], neigh[-1, j, 1], color='r', marker='x')
 

@@ -117,7 +117,7 @@ def get_interaction_matrix(rows, args, output='all'):
     else:
         raise NotImplementedError 
 
-def check_group(rows, args, dist_thresh=0.8, std_thresh=0.1):
+def check_group(rows, args, dist_thresh=0.8, std_thresh=0.2):
     ## Identify Groups
     ## dist_thresh: Distance threshold to be withinin a group
     ## std_thresh: Std deviation threshold for variation of distance

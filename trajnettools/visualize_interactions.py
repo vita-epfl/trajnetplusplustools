@@ -54,13 +54,7 @@ def interaction_plots(input_file, interaction_type, args):
         path = rows[:, 0]
         neigh_path = rows[:, 1:]
         neigh = neigh_path[:,interaction_index]
-
         num_interactions = np.any(interaction_index)
-        # num_interactions = np.sum(interaction_index) == 1
-
-        if interaction_type == 'group':
-            num_interactions = np.any(interaction_index)
-
         
         ## Calculate and display
         if num_interactions & (np.linalg.norm(path[-1] - path[0]) > 1.0):
@@ -73,12 +67,9 @@ def interaction_plots(input_file, interaction_type, args):
                     output = '{}_{}_{}.png'.format(input_file, interaction_type, n_instances)
                     with show.interaction_path(path, neigh, kf=kf, output_file=output):
                         pass
-                    # with show.interaction_path(path, neigh_path):
-                        # parse_args
-
-                ## if required
-                # show.makeDynamicPlot(rows.transpose(1, 0, 2), np=True)
-
+                    output = '{}_{}_{}_full.png'.format(input_file, interaction_type, n_instances)
+                    with show.interaction_path(path, neigh_path, kf=kf, output_file=output):
+                        pass
     print("Number of Instances: ", n_instances) 
 
 def distribution_plots(input_file, args):
@@ -142,7 +133,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset_files', nargs='+',
                         help='Trajnet dataset file(s).')
-    parser.add_argument('--pos_angle', type=int, default=90,
+    parser.add_argument('--pos_angle', type=int, default=0,
                         help='axis angle of position cone (in deg)')
     parser.add_argument('--vel_angle', type=int, default=0,
                         help='relative velocity centre (in deg)')
@@ -158,9 +149,9 @@ def main():
                         help='number of segments in polar plot linearly')
     parser.add_argument('--choice', default='bothpos',
                         help='choice of interaction')
-    parser.add_argument('--n', type=int, default=5,
+    parser.add_argument('--n', type=int, default=10,
                         help='number of plots')
-    parser.add_argument('--interaction_type', default='group',
+    parser.add_argument('--interaction_type', default='lf',
                         help='type of interaction')
     args = parser.parse_args()
 
@@ -188,6 +179,9 @@ def main():
     elif interaction_type == 'group': 
         args.pos_range = 45
         args.choice = 'pos'
+
+    else:
+        pass
 
     for dataset_file in args.dataset_files:
         # pass
