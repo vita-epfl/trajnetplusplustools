@@ -3,7 +3,7 @@ Tools
 
 * summary table and plots: ``python -m trajnettools.summarize <dataset_files>``
 * plot trajectories in a scene: ``python -m trajnettools.trajectories <dataset_file>``
-
+* visualize interactions: ``python -m trajnettools.trajectories <dataset_file> --interaction_type 'ca'``
 
 APIs
 ====
@@ -11,7 +11,7 @@ APIs
 * ``trajnettools.Reader``: class to read the dataset_file
 * ``trajnettools.show``: module containing contexts for visualizing ``rows`` and ``paths``
 * ``trajnettools.writers``: write a trajnet dataset file
-* ``trajnettools.metrics``: contains ``average_l2()`` and ``final_l2()`` functions
+* ``trajnettools.metrics``: contains ``average_l2(), final_l2() and collision()`` functions
 
 
 Dataset
@@ -41,7 +41,8 @@ with:
 * ``tag``: trajectory type
 * ``f``: frame id
 * ``x``, ``y``: x- and y-coordinate in meters
-* ``pred_number``: (optional) prediction number for "nearest neighbor search"
+* ``pred_number``: (optional) prediction number for multiple output predictions
+* ``scene_id``: (optional) corresponding scene_id for multiple output predictions
 
 Frame numbers are not recomputed. Rows are resampled to about
 2.5 rows per second.
@@ -108,5 +109,31 @@ wildtrack:
 | .. image:: docs/train/wildtrack.ndjson.theta.png          | .. image:: docs/train/wildtrack.ndjson.speed.png          |
 +-----------------------------------------------------------+-----------------------------------------------------------+
 
+Interactions
+============
+
+leader_follower: 
+
++--------------------------------------------------------+-----------------------------------------------------------+
+| .. image:: docs/train/crowds_zara02.ndjson_1_9.png     | .. image:: docs/train/crowds_zara02.ndjson_1_9_full.png   |
++--------------------------------------------------------+-----------------------------------------------------------+
+
+collision_avoidance:
+
++---------------------------------------------------------+------------------------------------------------------------+
+| .. image:: docs/train/crowds_zara02.ndjson_2_25.png     | .. image:: docs/train/crowds_zara02.ndjson_2_25_full.png   |
++---------------------------------------------------------+------------------------------------------------------------+
+
+group:
+
++--------------------------------------------------------+-----------------------------------------------------------+
+| .. image:: docs/train/crowds_zara02.ndjson_3_9.png     | .. image:: docs/train/crowds_zara02.ndjson_3_9_full.png   |
++--------------------------------------------------------+-----------------------------------------------------------+
+
+others:
+
++---------------------------------------------------------+------------------------------------------------------------+
+| .. image:: docs/train/crowds_zara02.ndjson_4_13.png     | .. image:: docs/train/crowds_zara02.ndjson_4_13_full.png   |
++---------------------------------------------------------+------------------------------------------------------------+
 
 .. _ndJSON: http://ndjson.org/
