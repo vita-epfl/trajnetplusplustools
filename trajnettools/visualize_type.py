@@ -101,7 +101,7 @@ def main():
                         help='number of segments in polar plot linearly')
     parser.add_argument('--choice', default='bothpos',
                         help='choice of interaction')
-    parser.add_argument('--n', type=int, default=50,
+    parser.add_argument('--n', type=int, default=5,
                         help='number of plots')
     parser.add_argument('--interaction_type', type=int, default=2,
                         help='type of interaction')
