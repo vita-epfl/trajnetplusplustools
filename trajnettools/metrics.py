@@ -34,7 +34,7 @@ def collision(path1, path2, n_predictions=12, person_radius=0.1):
     path1 = [path1[i] for i in range(len(path1)) if path1[i].frame in common_frames]
     path2 = [path2[i] for i in range(len(path2)) if path2[i].frame in common_frames]
 
-    def getinsidepoints(p1, p2, parts=10):
+    def getinsidepoints(p1, p2, parts=2):
         """return: equally distanced points between starting and ending "control" points"""
 
         return np.array((np.linspace(p1[0], p2[0], parts + 1),
