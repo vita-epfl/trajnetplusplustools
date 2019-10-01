@@ -1,7 +1,7 @@
 [BASIC]
 
 variable-rgx=[a-z0-9_]{1,30}$
-good-names=n,nx,ny,xy
+good-names=n,nx,ny,xy,p1,p2
 
 [TYPECHECK]
 
@@ -9,3 +9,7 @@ good-names=n,nx,ny,xy
 # system, and so shouldn't trigger E1101 when accessed. Python regular
 # expressions are accepted.
 generated-members=numpy.*,torch.*
+
+
+# numpy specific bug: unsubscriptable-object
+disable=missing-docstring,duplicate-code,unsubscriptable-object

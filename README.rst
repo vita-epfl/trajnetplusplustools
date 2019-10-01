@@ -54,8 +54,8 @@ Dev
 .. code-block:: sh
 
     pylint trajnettools
-    pytest
-    mypy trajnettools --disallow-untyped-defs
+    python -m pytest
+    # optional: mypy trajnettools --disallow-untyped-defs
 
 
 Dataset Summaries
@@ -112,7 +112,7 @@ wildtrack:
 Interactions
 ============
 
-leader_follower: 
+leader_follower:
 
 +--------------------------------------------------------+-----------------------------------------------------------+
 | .. image:: docs/train/crowds_zara02.ndjson_1_9.png     | .. image:: docs/train/crowds_zara02.ndjson_1_9_full.png   |

@@ -20,6 +20,7 @@ setup(
     url='https://github.com/vita-epfl/trajnettools',
 
     install_requires=[
+        'numpy',
     ],
     extras_require={
         'test': [
