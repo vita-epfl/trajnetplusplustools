@@ -40,7 +40,7 @@ def dataset_plots(input_file, n_theta=64, vr_max=2.5, vr_n=10):
         unbinned_vr[thetap].append(vr)
 
     # run
-    for primary_ped, rows in load_all(input_file):
+    for _, rows in load_all(input_file):
         path = rows[:, 0]
         t_vr = compute_theta_vr(path)
         fill_grid(t_vr)

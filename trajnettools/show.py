@@ -1,4 +1,3 @@
-from collections import defaultdict
 from contextlib import contextmanager
 
 import matplotlib.pyplot as plt
@@ -54,7 +53,7 @@ def paths(input_paths, output_file=None):
         ax.legend()
 
 @contextmanager
-def interaction_path(path, neigh, kf=None, output_file=None):
+def interaction_path(path, neigh, kalman=None, output_file=None):
     """Context to plot paths."""
     with canvas(output_file, figsize=(8, 8)) as ax:
         ax.set_xlim([-10, 10])
@@ -63,7 +62,7 @@ def interaction_path(path, neigh, kf=None, output_file=None):
         ax.set_ylabel('y [m]')
 
         yield ax
-        
+
         # Center
         center = path[9, :]
         path = path - center
@@ -74,15 +73,15 @@ def interaction_path(path, neigh, kf=None, output_file=None):
         ax.plot(path[0, 0], path[0, 1], color='g', marker='o', label='start point')
         ax.plot(path[-1, 0], path[-1, 1], color='r', marker='x', label='end point')
 
-        for j in range(neigh.shape[1]):             
+        for j in range(neigh.shape[1]):
             ax.plot(neigh[:, j, 0], neigh[:, j, 1], color='g')
             ax.plot(neigh[0, j, 0], neigh[0, j, 1], color='g', marker='o')
             ax.plot(neigh[-1, j, 0], neigh[-1, j, 1], color='r', marker='x')
 
         # kalman if present
-        if kf is not None:
-            kf = kf - center
-            ax.plot(kf[:, 0, 0], kf[:, 0, 1], color='r', label = 'kalman')
+        if kalman is not None:
+            kalman = kalman - center
+            ax.plot(kalman[:, 0, 0], kalman[:, 0, 1], color='r', label='kalman')
 
         # frame
         ax.legend()
@@ -109,7 +108,6 @@ def predicted_paths(input_paths, pred_paths, output_file=None):
                 linestyle='None', zorder=0.9)
         ax.plot(xs[-1:], ys[-1:], color='black', marker='o', label='end',
                 linestyle='None', zorder=0.9)
-        
 
         # neigh tracks
         for ped_rows in input_paths[1:]:

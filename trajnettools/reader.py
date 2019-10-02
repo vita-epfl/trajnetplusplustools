@@ -12,7 +12,7 @@ class Reader(object):
     """Read trajnet files.
 
     :param scene_type: None -> numpy.array, 'rows' -> TrackRow and SceneRow, 'paths': grouped rows (primary pedestrian first)
-    :param image_file: Associated image file of the scene 
+    :param image_file: Associated image file of the scene
     """
     def __init__(self, input_file, scene_type=None, image_file=None):
         if scene_type is not None and scene_type not in {'rows', 'paths'}:
@@ -23,7 +23,6 @@ class Reader(object):
         self.scenes_by_id = dict()
 
         self.read_file(input_file)
-        self.image = self.read_image(image_file)
 
     def read_file(self, input_file):
         with open(input_file, 'r') as f:
@@ -32,19 +31,17 @@ class Reader(object):
 
                 track = line.get('track')
                 if track is not None:
-                    row = TrackRow(track['f'], track['p'], track['x'], track['y'], track.get('prediction_number'), track.get('scene_id'))
+                    row = TrackRow(track['f'], track['p'], track['x'], track['y'], \
+                                   track.get('prediction_number'), track.get('scene_id'))
                     self.tracks_by_frame[row.frame].append(row)
                     continue
 
                 scene = line.get('scene')
                 if scene is not None:
-                    row = SceneRow(scene['id'], scene['p'], scene['s'], scene['e'], scene['fps'], scene['tag'])
+                    row = SceneRow(scene['id'], scene['p'], scene['s'], scene['e'], \
+                                   scene['fps'], scene['tag'])
                     self.scenes_by_id[row.scene] = row
 
-    def read_image(self, image_file):
-        ## TODO 
-        return None
-        
     def scenes(self, randomize=False, limit=0, ids=None, sample=None):
         scene_ids = self.scenes_by_id.keys()
         if ids is not None:

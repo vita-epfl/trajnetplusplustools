@@ -3,7 +3,7 @@ Tools
 
 * summary table and plots: ``python -m trajnettools.summarize <dataset_files>``
 * plot trajectories in a scene: ``python -m trajnettools.trajectories <dataset_file>``
-* visualize interactions: ``python -m trajnettools.trajectories <dataset_file> --interaction_type 'ca'``
+* visualize interactions: ``python -m trajnettools.visualize_interactions <dataset_file> --interaction_type 'ca'``
 
 APIs
 ====

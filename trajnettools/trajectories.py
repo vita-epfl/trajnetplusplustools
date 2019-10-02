@@ -8,7 +8,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset_file',
                         help='trajnet dataset file')
-    parser.add_argument('--n', type=int, default=15,
+    parser.add_argument('--n', type=int, default=5,
                         help='sample n trajectories')
     parser.add_argument('--id', type=int, nargs='*',
                         help='plot a particular scene')
@@ -30,13 +30,9 @@ def main():
         scenes = reader.scenes(randomize=args.random)
 
     for scene_id, paths in scenes:
-        # output = '{}.scene{}.png'.format(args.output, scene_id)
-        # with show.paths(paths, output):
-        #     pass
-        with show.paths(paths):
+        output = '{}.scene{}.png'.format(args.output, scene_id)
+        with show.paths(paths, output):
             pass
-        # output = '{}.scene{}.gif'.format(args.output, scene_id)
-        # show.makeDynamicPlot(paths, output) 
 
 if __name__ == '__main__':
     main()

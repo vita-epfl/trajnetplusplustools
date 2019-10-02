@@ -43,7 +43,8 @@ def collision(path1, path2, n_predictions=12, person_radius=0.1):
     for i in range(len(path1) - 1):
         p1, p2 = [path1[i].x, path1[i].y], [path1[i + 1].x, path1[i + 1].y]
         p3, p4 = [path2[i].x, path2[i].y], [path2[i + 1].x, path2[i + 1].y]
-        if np.min(np.linalg.norm(getinsidepoints(p1, p2) - getinsidepoints(p3, p4), axis=0)) <= 2 * person_radius:
+        if np.min(np.linalg.norm(getinsidepoints(p1, p2) - getinsidepoints(p3, p4), axis=0)) \
+           <= 2 * person_radius:
             return True
 
     return False
