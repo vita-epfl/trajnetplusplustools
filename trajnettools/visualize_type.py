@@ -8,10 +8,10 @@ from . import metrics
 from .interactions import get_interaction_matrix, check_group
 from . import kalman
 
-def non_linear(scene):
-    primary_prediction, _ = kalman.predict(scene)[0]
+def non_linear(scene, args):
+    primary_prediction, _ = kalman.predict(scene, args.obs_len, args.pred_len)[0]
     score = metrics.final_l2(scene[0], primary_prediction)
-    return score > 1.0, primary_prediction
+    return score > 0.5, primary_prediction
 
 def interaction_length(interaction_matrix, length=1):
     interaction_sum = np.sum(interaction_matrix, axis=0)
@@ -45,6 +45,7 @@ def interaction_plots(input_file, interaction_type, args):
     scenes = [s for _, s in reader.scenes()]
     for type_id in type_ids:
         scene = scenes[type_id]
+        frame = scene[0][args.obs_len].frame
         rows = reader.paths_to_xy(scene)
         path = rows[:, 0]
         neigh_path = rows[:, 1:]
@@ -65,18 +66,20 @@ def interaction_plots(input_file, interaction_type, args):
         neigh = neigh_path[:, interaction_index]
 
         kf = None
-        # nl_tag, kf = non_linear(scene)
+        # nl_tag, kf = non_linear(scene, args)
         # kf = reader.paths_to_xy([kf])
 
         n_instances += 1
         ## n Examples of interactions ##
         if n_instances < args.n:
             output = '{}_{}_{}.pdf'.format(input_file, interaction_type, n_instances)
-            with show.interaction_path(path, neigh, kalman=kf, output_file=output):
+            with show.interaction_path(path, neigh, kalman=kf, output_file=output, obs_len=args.obs_len):
                 pass
             output = '{}_{}_{}_full.pdf'.format(input_file, interaction_type, n_instances)
-            with show.interaction_path(path, neigh_path, kalman=kf, output_file=output):
+            with show.interaction_path(path, neigh_path, kalman=kf, output_file=output, obs_len=args.obs_len):
                 pass
+
+
 
     print("Number of Instances: ", n_instances)
 
@@ -84,6 +87,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset_files', nargs='+',
                         help='Trajnet dataset file(s).')
+    parser.add_argument('--obs_len', type=int, default=9,
+                        help='observation length')
+    parser.add_argument('--pred_len', type=int, default=12,
+                        help='prediction length')
     parser.add_argument('--pos_angle', type=int, default=0,
                         help='axis angle of position cone (in deg)')
     parser.add_argument('--vel_angle', type=int, default=0,

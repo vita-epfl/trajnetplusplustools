@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 @contextmanager
 def canvas(image_file=None, **kwargs):
@@ -53,7 +54,7 @@ def paths(input_paths, output_file=None):
         ax.legend()
 
 @contextmanager
-def interaction_path(path, neigh, kalman=None, output_file=None):
+def interaction_path(path, neigh, kalman=None, output_file=None, obs_len=9):
     """Context to plot paths."""
     with canvas(output_file, figsize=(8, 8)) as ax:
         ax.set_xlim([-10, 10])
@@ -64,7 +65,7 @@ def interaction_path(path, neigh, kalman=None, output_file=None):
         yield ax
 
         # Center
-        center = path[9, :]
+        center = path[obs_len, :]
         path = path - center
         neigh = neigh - center
 

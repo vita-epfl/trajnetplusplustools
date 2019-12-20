@@ -1,3 +1,5 @@
+""" Categorizes the Interaction """
+
 import numpy as np
 
 def compute_velocity_interaction(path, neigh_path, obs_len=9, stride=3):
@@ -66,9 +68,10 @@ def get_interaction_matrix(rows, args, output='all'):
 
     path = rows[:, 0]
     neigh_path = rows[:, 1:]
-    theta_interaction, sign_interaction = compute_theta_interaction(path, neigh_path)
-    vel_interaction, sign_vel_interaction = compute_velocity_interaction(path, neigh_path)
-    dist_rel = compute_dist_rel(path, neigh_path)
+    obs_len = args.obs_len
+    theta_interaction, _ = compute_theta_interaction(path, neigh_path, obs_len)
+    vel_interaction, _ = compute_velocity_interaction(path, neigh_path, obs_len)
+    dist_rel = compute_dist_rel(path, neigh_path, obs_len)
 
     ## str choice
     if args.choice == 'pos':
@@ -80,7 +83,6 @@ def get_interaction_matrix(rows, args, output='all'):
         interaction_matrix = compute_interaction(vel_interaction, dist_rel, \
                                                  args.vel_angle, args.dist_thresh, args.vel_range)
         chosen_interaction = vel_interaction
-        sign_interaction = sign_vel_interaction
 
     elif args.choice == 'bothpos':
         pos_matrix = compute_interaction(theta_interaction, dist_rel, \
@@ -97,19 +99,17 @@ def get_interaction_matrix(rows, args, output='all'):
                                          args.vel_angle, args.dist_thresh, args.vel_range)
         interaction_matrix = pos_matrix & vel_matrix
         chosen_interaction = vel_interaction
-        sign_interaction = sign_vel_interaction
     else:
         raise NotImplementedError
 
     chosen_true = chosen_interaction[interaction_matrix]
-    sign_true = sign_interaction[interaction_matrix]
     dist_true = dist_rel[interaction_matrix]
 
     ## output choice
     if output == 'matrix':
         return interaction_matrix
     if output == 'all':
-        return interaction_matrix, chosen_true, sign_true, dist_true
+        return interaction_matrix, chosen_true, dist_true
     raise NotImplementedError
 
 def check_group(rows, args, dist_thresh=0.8, std_thresh=0.2):

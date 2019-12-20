@@ -8,10 +8,10 @@ from . import metrics
 from .interactions import get_interaction_matrix, check_group
 from . import kalman
 
-def non_linear(scene):
-    primary_prediction, _ = kalman.predict(scene)[0]
+def non_linear(scene, args):
+    primary_prediction, _ = kalman.predict(scene, args.obs_len, args.pred_len)[0]
     score = metrics.final_l2(scene[0], primary_prediction)
-    return score > 1.0, primary_prediction
+    return score > 0.5, primary_prediction
 
 def interaction_length(interaction_matrix, length=1):
     interaction_sum = np.sum(interaction_matrix, axis=0)
@@ -56,17 +56,17 @@ def interaction_plots(input_file, interaction_type, args):
 
         ## Calculate and display
         if num_interactions & (np.linalg.norm(path[-1] - path[0]) > 1.0):
-            nl_tag, kf = non_linear(scene)
+            nl_tag, kf = non_linear(scene, args)
             kf = reader.paths_to_xy([kf])
             if nl_tag:
                 n_instances += 1
                 ## n Examples of interactions ##
                 if n_instances <= args.n:
                     output = '{}_{}_{}.png'.format(input_file, interaction_type, n_instances)
-                    with show.interaction_path(path, neigh, kalman=kf, output_file=output):
+                    with show.interaction_path(path, neigh, kalman=kf, output_file=output, obs_len=args.obs_len):
                         pass
                     output = '{}_{}_{}_full.png'.format(input_file, interaction_type, n_instances)
-                    with show.interaction_path(path, neigh_path, kalman=kf, output_file=output):
+                    with show.interaction_path(path, neigh_path, kalman=kf, output_file=output, obs_len=args.obs_len):
                         pass
     print("Number of Instances: ", n_instances)
 
@@ -75,7 +75,7 @@ def distribution_plots(input_file, args):
     n_theta, vr_n, dist_thresh, choice = args.n_theta, args.vr_n, args.dist_thresh, args.choice
     distr = np.zeros((n_theta, vr_n))
     def fill_grid(theta_vr):
-        theta, vr, _ = theta_vr
+        theta, vr = theta_vr
         theta = theta*(2*np.pi)/360
         thetap = np.floor(theta * distr.shape[0] / (2*np.pi)).astype(int)
         vrp = np.floor(vr * distr.shape[1] / dist_thresh).astype(int)
@@ -83,7 +83,7 @@ def distribution_plots(input_file, args):
 
     unbinned_vr = [[] for _ in range(n_theta)]
     def fill_unbinned_vr(theta_vr):
-        theta, vr, _ = theta_vr
+        theta, vr = theta_vr
         theta = theta*(2*np.pi)/360
         thetap = np.floor(theta * len(unbinned_vr) / (2*np.pi)).astype(int)
         for th, _ in enumerate(thetap):
@@ -96,11 +96,10 @@ def distribution_plots(input_file, args):
 
     #run
     for _, rows in load_all(input_file):
-        _, chosen_true, sign_true, dist_true = \
-        get_interaction_matrix(rows, args)
+        _, chosen_true, dist_true = get_interaction_matrix(rows, args)
 
-        fill_grid((chosen_true, dist_true, sign_true))
-        fill_unbinned_vr((chosen_true, dist_true, sign_true))
+        fill_grid((chosen_true, dist_true))
+        fill_unbinned_vr((chosen_true, dist_true))
         fill_hist(chosen_true)
 
     with show.canvas(input_file + '.' + choice + '.png', figsize=(4, 4), subplot_kw={'polar': True}) as ax:
@@ -129,6 +128,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset_files', nargs='+',
                         help='Trajnet dataset file(s).')
+    parser.add_argument('--obs_len', type=int, default=9,
+                        help='observation length')
+    parser.add_argument('--pred_len', type=int, default=12,
+                        help='prediction length')
     parser.add_argument('--pos_angle', type=int, default=0,
                         help='axis angle of position cone (in deg)')
     parser.add_argument('--vel_angle', type=int, default=0,
