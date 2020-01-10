@@ -2,6 +2,13 @@
 
 import numpy as np
 
+from . import kalman
+from . import metrics
+
+#######################################
+## Helper Functions for interactions ##
+#######################################
+
 def compute_velocity_interaction(path, neigh_path, obs_len=9, stride=3):
     ## Computes the angle between velocity of neighbours and velocity of pp
 
@@ -62,41 +69,43 @@ def compute_interaction(theta_rel_orig, dist_rel, angle, dist_thresh, angle_rang
                          & (dist_rel < dist_thresh) & (theta_rel < 500) == 1
     return interaction_matrix
 
+def interaction_length(interaction_matrix, length=1):
+    interaction_sum = np.sum(interaction_matrix, axis=0)
+    return interaction_sum >= length
 
-def get_interaction_matrix(rows, args, output='all'):
-    ## Computes the angle between velocity of pp at t_obs and velocity of pp at t_pred
+def check_interaction(rows, pos_range=15, dist_thresh=5, choice='pos', \
+                      pos_angle=0, vel_angle=0, vel_range=15, output='matrix', obs_len=9):
 
     path = rows[:, 0]
     neigh_path = rows[:, 1:]
-    obs_len = args.obs_len
     theta_interaction, _ = compute_theta_interaction(path, neigh_path, obs_len)
     vel_interaction, _ = compute_velocity_interaction(path, neigh_path, obs_len)
     dist_rel = compute_dist_rel(path, neigh_path, obs_len)
 
     ## str choice
-    if args.choice == 'pos':
+    if choice == 'pos':
         interaction_matrix = compute_interaction(theta_interaction, dist_rel, \
-                                                 args.pos_angle, args.dist_thresh, args.pos_range)
+                                                 pos_angle, dist_thresh, pos_range)
         chosen_interaction = theta_interaction
 
-    elif args.choice == 'vel':
+    elif choice == 'vel':
         interaction_matrix = compute_interaction(vel_interaction, dist_rel, \
-                                                 args.vel_angle, args.dist_thresh, args.vel_range)
+                                                 vel_angle, dist_thresh, vel_range)
         chosen_interaction = vel_interaction
 
-    elif args.choice == 'bothpos':
+    elif choice == 'bothpos':
         pos_matrix = compute_interaction(theta_interaction, dist_rel, \
-                                         args.pos_angle, args.dist_thresh, args.pos_range)
+                                         pos_angle, dist_thresh, pos_range)
         vel_matrix = compute_interaction(vel_interaction, dist_rel, \
-                                         args.vel_angle, args.dist_thresh, args.vel_range)
+                                         vel_angle, dist_thresh, vel_range)
         interaction_matrix = pos_matrix & vel_matrix
         chosen_interaction = theta_interaction
 
-    elif args.choice == 'bothvel':
+    elif choice == 'bothvel':
         pos_matrix = compute_interaction(theta_interaction, dist_rel, \
-                                         args.pos_angle, args.dist_thresh, args.pos_range)
+                                         pos_angle, dist_thresh, pos_range)
         vel_matrix = compute_interaction(vel_interaction, dist_rel, \
-                                         args.vel_angle, args.dist_thresh, args.vel_range)
+                                         vel_angle, dist_thresh, vel_range)
         interaction_matrix = pos_matrix & vel_matrix
         chosen_interaction = vel_interaction
     else:
@@ -105,14 +114,14 @@ def get_interaction_matrix(rows, args, output='all'):
     chosen_true = chosen_interaction[interaction_matrix]
     dist_true = dist_rel[interaction_matrix]
 
-    ## output choice
     if output == 'matrix':
         return interaction_matrix
     if output == 'all':
         return interaction_matrix, chosen_true, dist_true
-    raise NotImplementedError
 
-def check_group(rows, args, dist_thresh=0.8, std_thresh=0.2):
+    return np.any(interaction_matrix)
+
+def check_group(rows, dist_thresh=0.8, std_thresh=0.2, obs_len=9):
     ## Identify Groups
     ## dist_thresh: Distance threshold to be withinin a group
     ## std_thresh: Std deviation threshold for variation of distance
@@ -121,10 +130,8 @@ def check_group(rows, args, dist_thresh=0.8, std_thresh=0.2):
     neigh_path = rows[:, 1:]
 
     ## Horizontal Position
-    args.pos_angle = 90
-    interaction_matrix_1 = get_interaction_matrix(rows, args, output='matrix')
-    args.pos_angle = 270
-    interaction_matrix_2 = get_interaction_matrix(rows, args, output='matrix')
+    interaction_matrix_1 = check_interaction(rows, pos_angle=90, pos_range=45, obs_len=obs_len)
+    interaction_matrix_2 = check_interaction(rows, pos_angle=270, pos_range=45, obs_len=obs_len)
     neighs_side = np.any(interaction_matrix_1, axis=0) | np.any(interaction_matrix_2, axis=0)
 
     ## Distance Maintain
@@ -135,3 +142,149 @@ def check_group(rows, args, dist_thresh=0.8, std_thresh=0.2):
     group_matrix = (mean_dist < dist_thresh) & (std_dist < std_thresh) & neighs_side
 
     return group_matrix
+
+#####################################
+## Functions for Interaction types ##
+#####################################
+
+## Type 2
+def non_linear(scene, obs_len=9, pred_len=12):
+    primary_prediction, _ = kalman.predict(scene, obs_len, pred_len)[0]
+    score = metrics.final_l2(scene[0], primary_prediction)
+    return score > 0.5, primary_prediction
+
+## Type 3a
+def leader_follower(rows, pos_range=15, dist_thresh=5, obs_len=9):
+    """ Identifying Leader Follower Behavior """
+    interaction_matrix = check_interaction(rows, pos_range=pos_range, dist_thresh=dist_thresh,
+                                           choice='bothpos', obs_len=obs_len)
+    interaction_index = interaction_length(interaction_matrix, length=5)
+    return interaction_index
+
+## Type 3b
+def collision_avoidance(rows, pos_range=15, dist_thresh=5, obs_len=9):
+    """ Identifying Collision Avoidance Behavior """
+    interaction_matrix = check_interaction(rows, pos_range=pos_range, dist_thresh=dist_thresh, \
+                                           choice='bothpos', vel_angle=180, obs_len=obs_len)
+    interaction_index = interaction_length(interaction_matrix, length=1)
+    return interaction_index
+
+## Type 3c
+def group(rows, dist_thresh=0.8, std_thresh=0.2, obs_len=9):
+    """ Identifying Group Behavior """
+    # print("HERE")
+    interaction_index = check_group(rows, dist_thresh, std_thresh, obs_len)
+    return interaction_index
+
+## Get Type
+def get_interaction_type(rows, pos_range=15, dist_thresh=5, obs_len=9):
+    interaction_type = []
+    if np.any(leader_follower(rows, pos_range, dist_thresh, obs_len)):
+        interaction_type.append(1)
+    if np.any(collision_avoidance(rows, pos_range, dist_thresh, obs_len)):
+        interaction_type.append(2)
+    if np.any(group(rows, obs_len=obs_len)):
+        interaction_type.append(3)
+    if interaction_type == []:
+        interaction_type.append(4)
+    return interaction_type
+
+# def get_interaction_matrix(rows, args, output='all'):
+#     ## Computes the angle between velocity of pp at t_obs and velocity of pp at t_pred
+
+#     path = rows[:, 0]
+#     neigh_path = rows[:, 1:]
+#     obs_len = args.obs_len
+#     theta_interaction, _ = compute_theta_interaction(path, neigh_path, obs_len)
+#     vel_interaction, _ = compute_velocity_interaction(path, neigh_path, obs_len)
+#     dist_rel = compute_dist_rel(path, neigh_path, obs_len)
+
+#     ## str choice
+#     if args.choice == 'pos':
+#         interaction_matrix = compute_interaction(theta_interaction, dist_rel, \
+#                                                  args.pos_angle, args.dist_thresh, args.pos_range)
+#         chosen_interaction = theta_interaction
+
+#     elif args.choice == 'vel':
+#         interaction_matrix = compute_interaction(vel_interaction, dist_rel, \
+#                                                  args.vel_angle, args.dist_thresh, args.vel_range)
+#         chosen_interaction = vel_interaction
+
+#     elif args.choice == 'bothpos':
+#         pos_matrix = compute_interaction(theta_interaction, dist_rel, \
+#                                          args.pos_angle, args.dist_thresh, args.pos_range)
+#         vel_matrix = compute_interaction(vel_interaction, dist_rel, \
+#                                          args.vel_angle, args.dist_thresh, args.vel_range)
+#         interaction_matrix = pos_matrix & vel_matrix
+#         chosen_interaction = theta_interaction
+
+#     elif args.choice == 'bothvel':
+#         pos_matrix = compute_interaction(theta_interaction, dist_rel, \
+#                                          args.pos_angle, args.dist_thresh, args.pos_range)
+#         vel_matrix = compute_interaction(vel_interaction, dist_rel, \
+#                                          args.vel_angle, args.dist_thresh, args.vel_range)
+#         interaction_matrix = pos_matrix & vel_matrix
+#         chosen_interaction = vel_interaction
+#     else:
+#         raise NotImplementedError
+
+#     chosen_true = chosen_interaction[interaction_matrix]
+#     dist_true = dist_rel[interaction_matrix]
+
+#     ## output choice
+#     if output == 'matrix':
+#         return interaction_matrix
+#     if output == 'all':
+#         return interaction_matrix, chosen_true, dist_true
+#     raise NotImplementedError
+
+# def check_group(rows, args, dist_thresh=0.8, std_thresh=0.2):
+#     ## Identify Groups
+#     ## dist_thresh: Distance threshold to be withinin a group
+#     ## std_thresh: Std deviation threshold for variation of distance
+
+#     path = rows[:, 0]
+#     neigh_path = rows[:, 1:]
+
+#     ## Horizontal Position
+#     args.pos_angle = 90
+#     interaction_matrix_1 = get_interaction_matrix(rows, args, output='matrix')
+#     args.pos_angle = 270
+#     interaction_matrix_2 = get_interaction_matrix(rows, args, output='matrix')
+#     neighs_side = np.any(interaction_matrix_1, axis=0) | np.any(interaction_matrix_2, axis=0)
+
+#     ## Distance Maintain
+#     dist_rel = np.linalg.norm((neigh_path - path[:, np.newaxis, :]), axis=2)
+#     mean_dist = np.mean(dist_rel, axis=0)
+#     std_dist = np.std(dist_rel, axis=0)
+
+#     group_matrix = (mean_dist < dist_thresh) & (std_dist < std_thresh) & neighs_side
+
+#     return group_matrix
+
+# #####################################
+# ## Functions for Interaction types ##
+# #####################################
+
+# ## Type 2
+# def non_linear(scene, args):
+#     primary_prediction, _ = kalman.predict(scene, args.obs_len, args.pred_len)[0]
+#     score = metrics.final_l2(scene[0], primary_prediction)
+#     return score > 0.5, primary_prediction
+
+# ## Type 3a
+# def leader_follower(rows, args):
+#     interaction_matrix = get_interaction_matrix(rows, args, output='matrix')
+#     interaction_index = interaction_length(interaction_matrix, length=5)
+#     return interaction_index
+
+# ## Type 3b
+# def collision_avoidance(rows, args):
+#     interaction_matrix = get_interaction_matrix(rows, args, output='matrix')
+#     interaction_index = interaction_length(interaction_matrix, length=1)
+#     return interaction_index
+
+# ## Type 3c
+# def group(rows, args, dist_thresh=0.8, std_thresh=0.2):
+#     interaction_index = check_group(rows, args, dist_thresh, std_thresh)
+#     return interaction_index
