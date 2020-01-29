@@ -88,7 +88,7 @@ def interaction_path(path, neigh, kalman=None, output_file=None, obs_len=9):
         ax.legend()
 
 @contextmanager
-def predicted_paths(input_paths, pred_paths, output_file=None):
+def predicted_paths(input_paths, pred_paths, pred_neigh_paths=None, output_file=None):
     """Context to plot paths."""
     with canvas(output_file, figsize=(8, 8)) as ax:
         ax.grid(linestyle='dotted')
@@ -133,6 +133,20 @@ def predicted_paths(input_paths, pred_paths, output_file=None):
             ax.plot(xs[-1:], ys[-1:], color='black', marker='o', label='end',
                     linestyle='None', zorder=0.9)
 
+        # neigh predictions
+        if pred_neigh_paths is not None:
+            for name, neigh_paths in pred_neigh_paths.items():
+                for neigh_path in neigh_paths:
+                    xs = [r.x for r in neigh_path]
+                    ys = [r.y for r in neigh_path]
+                    # track
+                    ax.plot(xs, ys, linestyle='solid',
+                            marker='o', markersize=2.5, zorder=1.9)
+                    # markers
+                    ax.plot(xs[0:1], ys[0:1], color='black', marker='x',
+                            linestyle='None', zorder=0.9)
+                    ax.plot(xs[-1:], ys[-1:], color='black', marker='o',
+                            linestyle='None', zorder=0.9)
 
         # frame
         ax.legend()

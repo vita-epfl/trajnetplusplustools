@@ -53,13 +53,19 @@ def interaction_plots(input_file, trajectory_type, interaction_type, args):
         ## For Interacting Trajectories
         if trajectory_type == 3:
             if interaction_type == 1:
-                interaction_index = leader_follower(rows)
+                interaction_index = leader_follower(rows, pos_range=args.pos_range, \
+                                                    dist_thresh=ags.dist_thresh, \
+                                                    obs_len=args.obs_len)
             elif interaction_type == 2:
-                interaction_index = collision_avoidance(rows)
+                interaction_index = collision_avoidance(rows, pos_range=args.pos_range, \
+                                                        dist_thresh=ags.dist_thresh, \
+                                                        obs_len=args.obs_len)
             elif interaction_type == 3:
-                interaction_index = group(rows)
+                interaction_index = group(rows, obs_len=args.obs_len)
             elif interaction_type == 4:
-                interaction_matrix = check_interaction(rows)
+                interaction_matrix = check_interaction(rows, pos_range=args.pos_range, \
+                                                       dist_thresh=ags.dist_thresh, \
+                                                       obs_len=args.obs_len)
                 # "Shape": PredictionLength x Number of Neighbours
                 interaction_index = interaction_length(interaction_matrix, length=1)
             else:
@@ -81,7 +87,9 @@ def interaction_plots(input_file, trajectory_type, interaction_type, args):
         if trajectory_type == 4:
             if not categorized:
                 ## Check No Interactions
-                interaction_matrix = check_interaction(rows)
+                interaction_matrix = check_interaction(rows, pos_range=args.pos_range, \
+                                                       dist_thresh=ags.dist_thresh, \
+                                                       obs_len=args.obs_len)
                 interaction_index = interaction_length(interaction_matrix, length=1)
                 num_interactions = np.any(interaction_index)
 
@@ -106,10 +114,10 @@ def interaction_plots(input_file, trajectory_type, interaction_type, args):
         ## n Examples of interactions ##
         if n_instances < args.n:
             if neigh is not None:
-                output = 'interactions/{}_{}_{}.pdf'.format(file_name, interaction_type, n_instances)
+                output = 'interactions/{}_{}_{}.pdf'.format(file_name, interaction_type, type_id)
                 with show.interaction_path(path, neigh, kalman=kf, output_file=output, obs_len=args.obs_len):
                     pass
-            output = 'interactions/{}_{}_{}_full.pdf'.format(file_name, interaction_type, n_instances)
+            output = 'interactions/{}_{}_{}_full.pdf'.format(file_name, interaction_type, type_id)
             with show.interaction_path(path, neigh_path, kalman=kf, output_file=output, obs_len=args.obs_len):
                 pass
 

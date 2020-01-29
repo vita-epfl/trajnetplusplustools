@@ -6,8 +6,8 @@ from . import load_all
 from . import show
 
 
-def compute_theta_vr(path):
-    row1, row2, row3, row4 = path[5], path[8], path[17], path[20]
+def compute_theta_vr(path, obs_length=9):
+    row1, row2, row3, row4 = path[obs-4], path[obs-1], path[-4], path[-1]
     diff1 = np.array([row2[0] - row1[0], row2[1] - row1[1]])
     diff2 = np.array([row4[0] - row3[0], row4[1] - row3[1]])
     theta1 = np.arctan2(diff1[1], diff1[0])
@@ -19,7 +19,7 @@ def compute_theta_vr(path):
     return theta2 - theta1, vr2
 
 
-def dataset_plots(input_file, n_theta=64, vr_max=2.5, vr_n=10):
+def dataset_plots(input_file, n_theta=64, vr_max=2.5, vr_n=10, obs_length=9):
     distr = np.zeros((n_theta, vr_n))
     def fill_grid(theta_vr):
         theta, vr = theta_vr
@@ -42,7 +42,7 @@ def dataset_plots(input_file, n_theta=64, vr_max=2.5, vr_n=10):
     # run
     for _, rows in load_all(input_file):
         path = rows[:, 0]
-        t_vr = compute_theta_vr(path)
+        t_vr = compute_theta_vr(path, obs_length)
         fill_grid(t_vr)
         fill_unbinned_vr(t_vr)
 
@@ -76,6 +76,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset_files', nargs='+',
                         help='Trajnet dataset file(s).')
+    parser.add_argument('--obs_length', default=9, type=int,
+                        help='observation length')
     args = parser.parse_args()
 
     print('{dataset:>60s} |     N'.format(dataset=''))
@@ -86,7 +88,7 @@ def main():
         ))
 
     for dataset_file in args.dataset_files:
-        dataset_plots(dataset_file)
+        dataset_plots(dataset_file, obs_length=args.obs_length)
 
 
 if __name__ == '__main__':
