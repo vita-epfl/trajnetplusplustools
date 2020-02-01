@@ -49,22 +49,22 @@ def collision(path1, path2, n_predictions=12, person_radius=0.1):
 
     return False
 
-def topk(self, primary_tracks, ground_truth, n_predictions=12, topk=3):
-    ## TopK multimodal 
+def topk(primary_tracks, ground_truth, n_predictions=12, k_samples=3):
+    ## TopK multimodal
 
     l2 = 1e10
     ## preds: Pred_len x Num_preds x 2
-    for pred_num in range(topk):
+    for pred_num in range(k_samples):
         primary_prediction = [t for t in primary_tracks if t.prediction_number == pred_num]
         tmp_score = final_l2(ground_truth, primary_prediction)
-        if tmp_score < l2:      
-            l2 = tmp_score 
+        if tmp_score < l2:
+            l2 = tmp_score
             topk_fde = tmp_score
             topk_ade = average_l2(ground_truth, primary_prediction, n_predictions=n_predictions)
 
     return topk_ade, topk_fde
 
-def nll(self, primary_tracks, ground_truth, n_predictions=12, log_pdf_lower_bound=-20):
+def nll(primary_tracks, ground_truth, n_predictions=12, log_pdf_lower_bound=-20):
     ## Inspired from Boris.
     gt = np.array([[t.x, t.y] for t in ground_truth][-n_predictions:])
     frame_gt = [t.frame for t in ground_truth][-n_predictions:]

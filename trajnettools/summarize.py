@@ -7,7 +7,7 @@ from . import show
 
 
 def compute_theta_vr(path, obs_length=9):
-    row1, row2, row3, row4 = path[obs-4], path[obs-1], path[-4], path[-1]
+    row1, row2, row3, row4 = path[obs_length-4], path[obs_length-1], path[-4], path[-1]
     diff1 = np.array([row2[0] - row1[0], row2[1] - row1[1]])
     diff2 = np.array([row4[0] - row3[0], row4[1] - row3[1]])
     theta1 = np.arctan2(diff1[1], diff1[0])

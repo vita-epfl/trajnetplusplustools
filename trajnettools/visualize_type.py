@@ -4,7 +4,7 @@ import numpy as np
 from . import load_all
 from . import show
 from . import Reader
-from .interactions import non_linear, leader_follower, collision_avoidance, group 
+from .interactions import non_linear, leader_follower, collision_avoidance, group
 from .interactions import check_interaction, interaction_length
 
 def interaction_plots(input_file, trajectory_type, interaction_type, args):
@@ -15,7 +15,7 @@ def interaction_plots(input_file, trajectory_type, interaction_type, args):
     categorized = False
     if reader.scenes_by_id[0].tag == 0:
         print("Input File has not been categorized")
-        type_ids == list(range(len(scenes)))
+        type_ids = list(range(len(scenes)))
     else:
         print("Input File has been categorized")
         categorized = True
@@ -37,7 +37,7 @@ def interaction_plots(input_file, trajectory_type, interaction_type, args):
         ## For Linear Trajectories
         if trajectory_type == 1:
             if not categorized:
-                ## Check Path Length 
+                ## Check Path Length
                 static = np.linalg.norm(path[-1] - path[0]) < 1.0
                 if not static:
                     continue
@@ -54,17 +54,17 @@ def interaction_plots(input_file, trajectory_type, interaction_type, args):
         if trajectory_type == 3:
             if interaction_type == 1:
                 interaction_index = leader_follower(rows, pos_range=args.pos_range, \
-                                                    dist_thresh=ags.dist_thresh, \
+                                                    dist_thresh=args.dist_thresh, \
                                                     obs_len=args.obs_len)
             elif interaction_type == 2:
                 interaction_index = collision_avoidance(rows, pos_range=args.pos_range, \
-                                                        dist_thresh=ags.dist_thresh, \
+                                                        dist_thresh=args.dist_thresh, \
                                                         obs_len=args.obs_len)
             elif interaction_type == 3:
                 interaction_index = group(rows, obs_len=args.obs_len)
             elif interaction_type == 4:
                 interaction_matrix = check_interaction(rows, pos_range=args.pos_range, \
-                                                       dist_thresh=ags.dist_thresh, \
+                                                       dist_thresh=args.dist_thresh, \
                                                        obs_len=args.obs_len)
                 # "Shape": PredictionLength x Number of Neighbours
                 interaction_index = interaction_length(interaction_matrix, length=1)
@@ -75,20 +75,20 @@ def interaction_plots(input_file, trajectory_type, interaction_type, args):
                 num_interactions = np.any(interaction_index)
                 ## Check Non-Linearity
                 nl_tag, _ = non_linear(scene, args.obs_len, args.pred_len)
-                ## Check Path Length 
+                ## Check Path Length
                 path_length = np.linalg.norm(path[-1] - path[0]) > 1.0
-                ## Combine 
+                ## Combine
                 interacting = num_interactions & path_length & nl_tag
                 if not interacting:
-                    continue 
+                    continue
             neigh = neigh_path[:, interaction_index]
-        
+
         ## For Non Linear  Non-Interacting Trajectories
         if trajectory_type == 4:
             if not categorized:
                 ## Check No Interactions
                 interaction_matrix = check_interaction(rows, pos_range=args.pos_range, \
-                                                       dist_thresh=ags.dist_thresh, \
+                                                       dist_thresh=args.dist_thresh, \
                                                        obs_len=args.obs_len)
                 interaction_index = interaction_length(interaction_matrix, length=1)
                 num_interactions = np.any(interaction_index)
@@ -103,10 +103,10 @@ def interaction_plots(input_file, trajectory_type, interaction_type, args):
                 ## Check Path length
                 path_length = np.linalg.norm(path[-1] - path[0]) > 1.0
 
-                ## Combine 
+                ## Combine
                 non_interacting = (not num_interactions) & (not num_grp) & path_length & nl_tag
                 if not non_interacting:
-                    continue 
+                    continue
 
         kf = None ##Default
         n_instances += 1

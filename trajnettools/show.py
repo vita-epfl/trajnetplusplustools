@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 
 @contextmanager
 def canvas(image_file=None, **kwargs):
