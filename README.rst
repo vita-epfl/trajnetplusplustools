@@ -2,8 +2,9 @@ Tools
 =====
 
 * summary table and plots: ``python -m trajnettools.summarize <dataset_files>``
-* plot trajectories in a scene: ``python -m trajnettools.trajectories <dataset_file>``
+* plot sample trajectories: ``python -m trajnettools.trajectories <dataset_file>``
 * visualize interactions: ``python -m trajnettools.visualize_interactions <dataset_file> --interaction_type 'ca'``
+* obtain distribution of trajectory types: ``python -m trajnettools.dataset_stats <dataset_file>``
 
 APIs
 ====
@@ -11,7 +12,7 @@ APIs
 * ``trajnettools.Reader``: class to read the dataset_file
 * ``trajnettools.show``: module containing contexts for visualizing ``rows`` and ``paths``
 * ``trajnettools.writers``: write a trajnet dataset file
-* ``trajnettools.metrics``: contains ``average_l2(), final_l2() and collision()`` functions
+* ``trajnettools.metrics``: contains unimodal metrics: ``average_l2(), final_l2() and collision()`` and multimodal metrics: ``topk() and nll()`` implementations
 
 
 Dataset
