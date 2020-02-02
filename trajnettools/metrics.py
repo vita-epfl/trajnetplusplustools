@@ -51,29 +51,30 @@ def collision(path1, path2, n_predictions=12, person_radius=0.1):
 
 def topk(primary_tracks, ground_truth, n_predictions=12, k_samples=3):
     ## TopK multimodal
+    ## The Prediction closest to the GT in terms of ADE is considered
 
     l2 = 1e10
     ## preds: Pred_len x Num_preds x 2
     for pred_num in range(k_samples):
         primary_prediction = [t for t in primary_tracks if t.prediction_number == pred_num]
-        tmp_score = final_l2(ground_truth, primary_prediction)
+        tmp_score = average_l2(ground_truth, primary_prediction, n_predictions=n_predictions)
         if tmp_score < l2:
             l2 = tmp_score
-            topk_fde = tmp_score
-            topk_ade = average_l2(ground_truth, primary_prediction, n_predictions=n_predictions)
+            topk_ade = tmp_score
+            topk_fde = final_l2(ground_truth, primary_prediction)
 
     return topk_ade, topk_fde
 
-def nll(primary_tracks, ground_truth, n_predictions=12, log_pdf_lower_bound=-20):
+def nll(primary_tracks, ground_truth, n_predictions=12, log_pdf_lower_bound=-20, n_samples=100):
     ## Inspired from Boris.
     gt = np.array([[t.x, t.y] for t in ground_truth][-n_predictions:])
     frame_gt = [t.frame for t in ground_truth][-n_predictions:]
     preds = np.array([[[t.x, t.y] for t in primary_tracks if t.frame == frame] for frame in frame_gt])
     ## preds: Pred_len x Num_preds x 2
 
-    ## To verify if 100 predictions
-    if preds.shape[1] != 100:
-        raise Exception('Need 100 predictions')
+    ## To verify if n_samples predictions
+    if preds.shape[1] != n_samples:
+        raise Exception('Need {} predictions'.format(n_samples))
 
     pred_len = len(frame_gt)
 
