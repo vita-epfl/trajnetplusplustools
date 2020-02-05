@@ -18,7 +18,7 @@ def average_l2(path1, path2, n_predictions=12):
                for r1, r2 in zip(path1, path2)) / n_predictions
 
 
-def collision(path1, path2, n_predictions=12, person_radius=0.1):
+def collision(path1, path2, n_predictions=12, person_radius=0.1, inter_parts=2):
     """Check if there is collision or not"""
 
     assert len(path1) >= n_predictions
@@ -43,7 +43,7 @@ def collision(path1, path2, n_predictions=12, person_radius=0.1):
     for i in range(len(path1) - 1):
         p1, p2 = [path1[i].x, path1[i].y], [path1[i + 1].x, path1[i + 1].y]
         p3, p4 = [path2[i].x, path2[i].y], [path2[i + 1].x, path2[i + 1].y]
-        if np.min(np.linalg.norm(getinsidepoints(p1, p2) - getinsidepoints(p3, p4), axis=0)) \
+        if np.min(np.linalg.norm(getinsidepoints(p1, p2, inter_parts) - getinsidepoints(p3, p4, inter_parts), axis=0)) \
            <= 2 * person_radius:
             return True
 
@@ -80,7 +80,7 @@ def nll(primary_tracks, ground_truth, n_predictions=12, log_pdf_lower_bound=-20,
 
     ll = 0.0
     same_pred = 0
-    for timestep in range(pred_len):
+    for timestep in range(1, pred_len):
         curr_gt = gt[timestep]
         try:
             scipy_kde = gaussian_kde(preds[timestep].T)
