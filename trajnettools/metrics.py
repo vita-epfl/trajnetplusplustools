@@ -72,9 +72,10 @@ def nll(primary_tracks, ground_truth, n_predictions=12, log_pdf_lower_bound=-20,
     preds = np.array([[[t.x, t.y] for t in primary_tracks if t.frame == frame] for frame in frame_gt])
     ## preds: Pred_len x Num_preds x 2
 
-    ## To verify if n_samples predictions
-    if preds.shape[1] != n_samples:
+    ## To verify atleast n_samples predictions
+    if preds.shape[1] < n_samples:
         raise Exception('Need {} predictions'.format(n_samples))
+    preds = preds[:, :n_samples]
 
     pred_len = len(frame_gt)
 
