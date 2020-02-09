@@ -92,7 +92,7 @@ def nll(primary_tracks, ground_truth, n_predictions=12, log_pdf_lower_bound=-20,
             same_pred += 1
 
     if same_pred == pred_len:
-        raise Exception('All 100 Predictions are Identical')
+        raise Exception('All Predictions are Identical')
 
     ll = ll / (pred_len - same_pred)
     return ll
