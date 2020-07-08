@@ -126,11 +126,6 @@ def predicted_paths(input_paths, pred_paths, pred_neigh_paths=None, output_file=
             # track
             ax.plot(xs, ys, linestyle='solid', label=name,
                     marker='o', markersize=2.5, zorder=1.9)
-            # markers
-            ax.plot(xs[0:1], ys[0:1], color='black', marker='x', label='start',
-                    linestyle='None', zorder=0.9)
-            ax.plot(xs[-1:], ys[-1:], color='black', marker='o', label='end',
-                    linestyle='None', zorder=0.9)
 
         # neigh predictions
         if pred_neigh_paths is not None:
@@ -141,11 +136,6 @@ def predicted_paths(input_paths, pred_paths, pred_neigh_paths=None, output_file=
                     # track
                     ax.plot(xs, ys, linestyle='solid',
                             marker='o', markersize=2.5, zorder=1.9)
-                    # markers
-                    ax.plot(xs[0:1], ys[0:1], color='black', marker='x',
-                            linestyle='None', zorder=0.9)
-                    ax.plot(xs[-1:], ys[-1:], color='black', marker='o',
-                            linestyle='None', zorder=0.9)
 
         # frame
         ax.legend()

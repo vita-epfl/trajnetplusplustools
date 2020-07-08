@@ -66,7 +66,10 @@ def topk(primary_tracks, ground_truth, n_predictions=12, k_samples=3):
     return topk_ade, topk_fde
 
 def nll(primary_tracks, ground_truth, n_predictions=12, log_pdf_lower_bound=-20, n_samples=100):
-    ## Inspired from Boris.
+    """
+     Inspired from https://github.com/StanfordASL/Trajectron.
+    """
+
     gt = np.array([[t.x, t.y] for t in ground_truth][-n_predictions:])
     frame_gt = [t.frame for t in ground_truth][-n_predictions:]
     preds = np.array([[[t.x, t.y] for t in primary_tracks if t.frame == frame] for frame in frame_gt])
@@ -81,14 +84,21 @@ def nll(primary_tracks, ground_truth, n_predictions=12, log_pdf_lower_bound=-20,
 
     ll = 0.0
     same_pred = 0
-    for timestep in range(1, pred_len):
+    for timestep in range(pred_len):
         curr_gt = gt[timestep]
-        try:
+        ## If identical prediction at particular time-step, skip
+        if np.all(preds[timestep][1:] == preds[timestep][:-1]):
+            same_pred += 1
+            continue    
+        try: 
             scipy_kde = gaussian_kde(preds[timestep].T)
             # We need [0] because it's a (1,)-shaped numpy array.
             log_pdf = np.clip(scipy_kde.logpdf(curr_gt.T), a_min=log_pdf_lower_bound, a_max=None)[0]
+            if np.isnan(log_pdf) or np.isinf(log_pdf) or log_pdf > 100: ## Difficulties in computing Gaussian_KDE
+                same_pred += 1
+                continue
             ll += log_pdf
-        except:
+        except: ## Difficulties in computing Gaussian_KDE
             same_pred += 1
 
     if same_pred == pred_len:

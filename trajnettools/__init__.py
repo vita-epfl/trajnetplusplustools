@@ -6,3 +6,5 @@ from . import writers
 
 from .data import TrackRow, SceneRow
 from .dataset import load_all
+
+from . import kalman

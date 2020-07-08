@@ -11,11 +11,11 @@ from .data import SceneRow, TrackRow
 class Reader(object):
     """Read trajnet files.
 
-    :param scene_type: None -> numpy.array, 'rows' -> TrackRow and SceneRow, 'paths': grouped rows (primary pedestrian first)
+    :param scene_type: None -> numpy.array, 'rows' -> TrackRow and SceneRow, 'paths': grouped rows (primary pedestrian first), 'tags': numpy.array and scene tag
     :param image_file: Associated image file of the scene
     """
     def __init__(self, input_file, scene_type=None, image_file=None):
-        if scene_type is not None and scene_type not in {'rows', 'paths'}:
+        if scene_type is not None and scene_type not in {'rows', 'paths', 'tags'}:
             raise Exception('scene_type not supported')
         self.scene_type = scene_type
 
@@ -39,7 +39,7 @@ class Reader(object):
                 scene = line.get('scene')
                 if scene is not None:
                     row = SceneRow(scene['id'], scene['p'], scene['s'], scene['e'], \
-                                   scene['fps'], scene['tag'])
+                                   scene.get('fps'), scene.get('tag'))
                     self.scenes_by_id[row.scene] = row
 
     def scenes(self, randomize=False, limit=0, ids=None, sample=None):
@@ -110,6 +110,10 @@ class Reader(object):
         paths = self.track_rows_to_paths(scene.pedestrian, track_rows)
         if self.scene_type == 'paths':
             return scene_id, paths
+
+        ## return with scene tag
+        if self.scene_type == 'tags':
+            return scene_id, scene.tag, self.paths_to_xy(paths)
 
         # return a numpy array
         return scene_id, self.paths_to_xy(paths)
