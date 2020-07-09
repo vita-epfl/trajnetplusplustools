@@ -1,18 +1,18 @@
 Tools
 =====
 
-* summary table and plots: ``python -m trajnettools.summarize <dataset_files>``
-* plot sample trajectories: ``python -m trajnettools.trajectories <dataset_file>``
-* visualize interactions: ``python -m trajnettools.visualize_type <dataset_file>``
-* obtain distribution of trajectory types: ``python -m trajnettools.dataset_stats <dataset_file>``
+* summary table and plots: ``python -m trajnetplusplustools.summarize <dataset_files>``
+* plot sample trajectories: ``python -m trajnetplusplustools.trajectories <dataset_file>``
+* visualize interactions: ``python -m trajnetplusplustools.visualize_type <dataset_file>``
+* obtain distribution of trajectory types: ``python -m trajnetplusplustools.dataset_stats <dataset_file>``
 
 APIs
 ====
 
-* ``trajnettools.Reader``: class to read the dataset_file
-* ``trajnettools.show``: module containing contexts for visualizing ``rows`` and ``paths``
-* ``trajnettools.writers``: write a trajnet dataset file
-* ``trajnettools.metrics``: contains unimodal metrics: ``average_l2(), final_l2() and collision()`` and multimodal metrics: ``topk() and nll()`` implementations
+* ``trajnetplusplustools.Reader``: class to read the dataset_file
+* ``trajnetplusplustools.show``: module containing contexts for visualizing ``rows`` and ``paths``
+* ``trajnetplusplustools.writers``: write a trajnet dataset file
+* ``trajnetplusplustools.metrics``: contains unimodal metrics: ``average_l2(), final_l2() and collision()`` and multimodal metrics: ``topk() and nll()`` implementations
 
 
 Dataset
@@ -54,9 +54,9 @@ Dev
 
 .. code-block:: sh
 
-    pylint trajnettools
+    pylint trajnetplusplustools
     python -m pytest
-    # optional: mypy trajnettools --disallow-untyped-defs
+    # optional: mypy trajnetplusplustools --disallow-untyped-defs
 
 
 Dataset Summaries
@@ -138,3 +138,17 @@ others:
 +---------------------------------------------------------+------------------------------------------------------------+
 
 .. _ndJSON: http://ndjson.org/
+
+
+Citation
+========
+
+If you find this code useful in your research then please cite
+
+.. code-block::
+
+    @inproceedings{Kothari2020HumanTF,
+      title={Human Trajectory Forecasting in Crowds: A Deep Learning Perspective},
+      author={Parth Kothari and Sven Kreiss and Alexandre Alahi},
+      year={2020}
+    }
